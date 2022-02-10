@@ -12,6 +12,12 @@ pool:
   vmImage: 'windows-latest'
   
 steps:
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Uninstall-Module -Name AzureRm -AllVersions -Force
+
 - task: AzurePowerShell@5
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
