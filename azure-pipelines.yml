@@ -1,19 +1,20 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- master
+- none
+
+name: Deploy App Registration Automation
+
+variables:
+  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
 
 pool:
-  vmImage: ubuntu-latest
-
+  vmImage: 'windows-latest'
+  
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: $(azureResourceManagerConnection)
+    ScriptType: 'FilePath'
+    ScriptPath: './AppRegistration.ps1'
+    ScriptArguments: '-displayName IndigoMonitorApp-Automation -refObjectId 50a092f7-3eb3-4d89-b431-ebf8d1dbb447'
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
