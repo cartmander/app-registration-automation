@@ -16,6 +16,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
+      Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force
       Uninstall-AzureRm
 
 - task: AzurePowerShell@5
