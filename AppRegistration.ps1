@@ -111,3 +111,5 @@ function AppRegistration
     # Certificates and secrets
     New-AzureADApplicationPasswordCredential -CustomKeyIdentifier IndigoMonitorApp-Secret -ObjectId $appObjectId -EndDate ((Get-Date).AddMonths(12))
 }
+
+AppRegistration
