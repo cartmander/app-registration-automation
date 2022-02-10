@@ -1,9 +1,7 @@
 function AppRegistration
 {
     param(
-        [Parameter(Mandatory=$true)]
         [string]$displayName,
-        [Parameter(Mandatory=$true)]
         [string]$refObjectId
     )
 
