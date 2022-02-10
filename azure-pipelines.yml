@@ -16,9 +16,6 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     ScriptType: 'FilePath'
-    ScriptPath: './AppRegistration.ps1'
-    ScriptArguments: 
-      -displayName $(displayName)` 
-      -refObjectId $(refObjectId)
+    ScriptPath: './AppRegistration.ps1 -displayName $(displayName) -refObjectId $(refObjectId)'
     azurePowerShellVersion: 'LatestVersion'
     pwsh: true
