@@ -2,7 +2,7 @@ function AppRegistration
 {
     param(
         [Parameter(Mandatory=$true)]
-        [string]$displayName
+        [string]$displayName,
         [Parameter(Mandatory=$true)]
         [string]$refObjectId
     )
@@ -25,14 +25,6 @@ function AppRegistration
     
     function CreateAppRegistration
     {
-        param(
-            [Parameter(Mandatory=$true)]
-            [string]$displayName,
-            
-            [Parameter(Mandatory=$true)]
-            [string]$refObjectId
-        )
-        
         $aadApplication = New-AzureADApplication -DisplayName $displayName #"IndigoMonitorApp-Automation"
         $appId = $aadApplication.AppId
     
