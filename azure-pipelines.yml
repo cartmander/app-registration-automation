@@ -16,7 +16,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Uninstall-Module -Name AzureRm -AllVersions -Force
+      Uninstall-AzureRm
 
 - task: AzurePowerShell@5
   inputs:
