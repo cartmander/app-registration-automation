@@ -16,7 +16,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Install-Module -Name "AzureAD"
+      Install-Module -Name "AzureAD" CurrentUser -Force
     failOnStderr: true
     pwsh: true
 - task: AzurePowerShell@5
