@@ -16,7 +16,8 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Uninstall-AzureRm -PassThru
+      Install-Module -Name Az
+      Get-InstalledModule -Name AzureRM, AzureRM.* | Uninstall-Module
     pwsh: true
 
 - task: AzurePowerShell@5
