@@ -16,7 +16,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Install-Module -Name Az.Tools.Migration
+      Install-Module -Name Az.Tools.Migration -Scope CurrentUser -Force
 
 - task: AzurePowerShell@5
   inputs:
