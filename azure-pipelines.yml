@@ -16,7 +16,8 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Install-Module -Name Az.Tools.Migration -Scope CurrentUser -Force
+      Uninstall-AzureRm -PassThru
+    pwsh: true
 
 - task: AzurePowerShell@5
   inputs:
