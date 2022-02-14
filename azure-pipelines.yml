@@ -19,6 +19,7 @@ steps:
       Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force
       Install-Module -Name AzureRM -Scope CurrentUser -AllowClobber -Force
       Uninstall-AzureRm
+      Install-Module -Name AzureAD -Scope CurrentUser -AllowClobber -Force
     pwsh: true
 
 - task: AzurePowerShell@5
