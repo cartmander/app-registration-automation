@@ -4,9 +4,12 @@ trigger:
 name: Deploy App Registration Automation
 
 variables:
-  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
-  displayName: IndigoMonitorApp-Automation
-  refObjectId: 50a092f7-3eb3-4d89-b431-ebf8d1dbb447
+  - name: azureResourceManagerConnection
+    value: 'ICO-DEV-SERVICE-CONN'
+  - name: displayName
+    value: 'IndigoMonitorApp-Automation'
+  - name: refObjectId
+    value: '50a092f7-3eb3-4d89-b431-ebf8d1dbb447'
 
 pool:
   vmImage: 'windows-latest'
