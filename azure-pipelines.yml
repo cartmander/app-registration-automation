@@ -16,7 +16,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      Install-Module -Name Az -Scope CurrentUser -Force
+      Install-Module -Name Az -Scope CurrentUser -AllowCobber -Force
       Get-InstalledModule -Name AzureRM, AzureRM.* | Uninstall-Module
     pwsh: true
 
