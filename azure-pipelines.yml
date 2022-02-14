@@ -16,7 +16,11 @@ steps:
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     inline: |
+      Write-Host "uninstalling azureRm"
+      Uninstall-AzureRm
+      Write-Host "installing az"
       Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force
+      Write-Host "installing azureAd"
       Install-Module -Name AzureAD -AllowClobber -Scope CurrentUser -Force
     azurePowerShellVersion: 'LatestVersion'
     pwsh: true
