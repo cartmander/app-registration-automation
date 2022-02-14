@@ -18,7 +18,7 @@ steps:
     script: |
       Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force
       Install-Module -Name AzureRM -Scope CurrentUser -AllowClobber -Force
-      Get-InstalledModule -Name AzureRM, AzureRM.* | Uninstall-Module
+      Uninstall-AzureRm
     pwsh: true
 
 - task: AzurePowerShell@5
