@@ -12,12 +12,14 @@ pool:
   vmImage: 'windows-latest'
   
 steps:
-- task: PowerShell@2
+- task: AzurePowerShell@5
   inputs:
-    targetType: 'inline'
-    script: |
+    azureSubscription: $(azureResourceManagerConnection)
+    inline: |
       Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force
       Install-Module -Name AzureAD -AllowClobber -Scope CurrentUser -Force
+    azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
 
 - task: AzurePowerShell@5
   inputs:
