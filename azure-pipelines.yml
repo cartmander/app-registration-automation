@@ -4,21 +4,36 @@ trigger:
 name: Deploy App Registration Automation
 
 variables:
-  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
-  displayName: "IndigoMonitorApp-Automation"
-  refObjectId: "50a092f7-3eb3-4d89-b431-ebf8d1dbb447"
+- name: azureResourceManagerConnection
+  value: ICO-DEV-SERVICE-CONN
+
+parameters:
+- name: displayName
+  type: string
+  default: IndigoMonitorApp-Automation
+- name: refObjectId
+  type: string
+  default: 50a092f7-3eb3-4d89-b431-ebf8d1dbb447
 
 pool:
   vmImage: 'windows-latest'
   
 steps:
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force
+      Install-Module -Name AzureRM -Scope CurrentUser -AllowClobber -Force
+      Uninstall-AzureRm
+      Install-Module -Name AzureAD -Scope CurrentUser -AllowClobber -Force
+
 - task: AzurePowerShell@5
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     ScriptType: 'FilePath'
     ScriptPath: './AppRegistration.ps1'
     ScriptArguments: 
-      -displayName $(displayName)`
-      -refOjbectId $(refObjectId)
+      -displayName ${{ parameters.displayName }}`
+      -refOjbectId ${{ parameters.refObjectId }}
     azurePowerShellVersion: 'LatestVersion'
-    pwsh: true
