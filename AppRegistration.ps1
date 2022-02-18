@@ -1,6 +1,4 @@
-function AppRegistration
-{
-    param(
+param(
         [string]$displayName,
         [string]$refObjectId
     )
@@ -103,11 +101,9 @@ function AppRegistration
     # Expose an API
     az ad app update --id $appId --set oauth2Permissions[0].isEnabled=false
     az ad app update --id $appId --set oauth2Permissions=[]
+    az create
     
     Set-AzureADApplication -ObjectId $appObjectId -IdentifierUris "api://$appId"
     
     # Certificates and secrets
     New-AzureADApplicationPasswordCredential -CustomKeyIdentifier IndigoMonitorApp-Secret -ObjectId $appObjectId -EndDate ((Get-Date).AddMonths(12))
-}
-
-AppRegistration
