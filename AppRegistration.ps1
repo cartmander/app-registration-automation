@@ -3,6 +3,13 @@ param(
         [string]$refObjectId
     )
 
+    function AzureLogin
+    {
+        $context = Get-AzContext
+        $token = Get-AzAccessToken -ResourceTypeName AadGraph
+        Connect-AzureAD -AadAccessToken $token.Token -AccountId $context.Account.Id -TenantId $context.Tenant.Id
+    }
+
     function GetAzureADApplicationAppId
     {
         $aadApplication = Get-AzureADApplication -Filter "DisplayName eq $displayName"
@@ -94,6 +101,7 @@ param(
     }
     
     #Main Program
+    AzureLogin
     CreateAppRegistration
     AddApiPermissions
     AddApplicationRoles
@@ -106,4 +114,4 @@ param(
     Set-AzureADApplication -ObjectId $appObjectId -IdentifierUris "api://$appId"
     
     # Certificates and secrets
-    New-AzureADApplicationPasswordCredential -CustomKeyIdentifier IndigoMonitorApp-Secret -ObjectId $appObjectId -EndDate ((Get-Date).AddMonths(12))
+    #New-AzureADApplicationPasswordCredential -CustomKeyIdentifier IndigoMonitorApp-Secret -ObjectId $appObjectId -EndDate ((Get-Date).AddMonths(12))
