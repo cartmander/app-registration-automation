@@ -1,6 +1,5 @@
 param(
-        [string]$displayName,
-        [string]$refObjectId
+        [string]$displayName
     )
 
     function AzureLogin
