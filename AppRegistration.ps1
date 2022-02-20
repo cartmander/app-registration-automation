@@ -11,7 +11,7 @@ param(
 
     function GetAzureADApplicationAppId
     {
-        $aadApplication = Get-AzureADApplication -Filter "DisplayName eq $displayName"
+        $aadApplication = Get-AzureADApplication -Filter "DisplayName eq '$displayName'"
         $appId = $aadApplication.AppId
     
         return $appId
@@ -19,7 +19,7 @@ param(
     
     function GetAzureADApplicationObjectId
     {
-        $aadApplication = Get-AzureADApplication -Filter "DisplayName eq $displayName"
+        $aadApplication = Get-AzureADApplication -Filter "DisplayName eq '$displayName'"
         $appObjectId = $aadApplication.ObjectId
     
         return $appObjectId
