@@ -29,7 +29,8 @@ param(
     {
         $aadApplication = New-AzureADApplication -DisplayName $displayName #"IndigoMonitorApp-Automation"
         $appId = $aadApplication.AppId
-    
+        $appObjectId = $aadApplication.ObjectId
+
         Add-AzureADApplicationOwner -ObjectId $appObjectId -RefObjectId "50a092f7-3eb3-4d89-b431-ebf8d1dbb447"
     }
     
