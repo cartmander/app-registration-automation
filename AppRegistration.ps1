@@ -67,7 +67,7 @@ param(
         $requiredResourcesAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.RequiredResourceAccess]
         $requiredResourcesAccess.Add($requiredGraphAccess)
         
-        $appObjectId = GetAzureADApplicationObjectId $displayName
+        $appObjectId = GetAzureADApplicationObjectId
         Set-AzureADApplication -ObjectId $appObjectId -RequiredResourceAccess $requiredResourcesAccess
     }
     
@@ -96,7 +96,7 @@ param(
         $applicationRoles.Add($administratorAppRole)
         $applicationRoles.Add($monitorAppRole)
     
-        $appObjectId = GetAzureADApplicationObjectId $displayName
+        $appObjectId = GetAzureADApplicationObjectId
         Set-AzureADApplication -ObjectId $appObjectId -AppRoles $applicationRoles
     }
     
@@ -106,10 +106,12 @@ param(
     AddApiPermissions
     AddApplicationRoles
     
+    $appId = GetAzureADApplicationAppId
+    $appObjectId = GetAzureADApplicationObjectId
+
     # Expose an API
     az ad app update --id $appId --set oauth2Permissions[0].isEnabled=false
     az ad app update --id $appId --set oauth2Permissions=[]
-    az create
     
     Set-AzureADApplication -ObjectId $appObjectId -IdentifierUris "api://$appId"
     
