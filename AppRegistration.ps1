@@ -22,7 +22,7 @@ function AddOwners
     }
 }
 
-function AddAPIPermissions
+function AddApiPermissions
 {
     param(
         [string] $appId
@@ -35,7 +35,7 @@ function AddAPIPermissions
     az ad app permission add --id $appId --api $api --api-permissions b340eb25-3456-403f-be2f-af7a0d370277=Scope
 }
 
-function UpdatePermissionsAndAPIs
+function UpdatePermissionsAndApis
 {
     az ad app update --id $appId --set oauth2Permissions[0].isEnabled=false
     az ad app update --id $appId --set oauth2Permissions=[]
@@ -74,10 +74,10 @@ if ($getAADApplication -eq $null)
     AddOwners $appId
 
     #API Permissions
-    AddAPIPermissions $appId
+    AddApiPermissions $appId
 
     # Expose an API
-    UpdatePermissionsAndAPIs
+    UpdatePermissionsAndApis
 
     # Authentication
     AddReplyUrls
