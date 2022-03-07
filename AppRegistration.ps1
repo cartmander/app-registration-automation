@@ -44,6 +44,24 @@ function AddApiPermissions
     Set-AzureADApplication -ObjectId $objectId -RequiredResourceAccess $requiredResourcesAccess
 }
 
+function AddOwners
+{
+    param(
+        [string]$appId
+    )
+
+    foreach ($owner in $owners)
+    {
+        $appOwner = az ad user show --id $owner | ConvertFrom-Json
+
+        if($appOwner -ne $null)
+        {
+            $ownerObjectId = $appOwner.ObjectId
+            az ad app owner add --id $appId --owner-object-id $ownerObjectId
+        }
+    }
+}
+
 function AddReplyUrls
 {
     if ($replyUrls.Count -gt 0)
@@ -70,11 +88,10 @@ if ($getAADApplication -eq $null)
     $appId = $createAADApplication.AppId
     $objectId = $createAADApplication.ObjectId
 
-    #$appOwner = az ad user show --id "kevin.almario@willistowerswatson.com" | ConvertFrom-Json
-    #$appOwnerObjectId = $appOwner.ObjectId
-    
-    #az ad app owner add --id $getAADApplication.AppId --owner-object-id $appOwnerObjectId
+    #Owners
+    AddOwners $appId
 
+    #API Permissions
     #AddApiPermissions $objectId
 
     # Expose an API
