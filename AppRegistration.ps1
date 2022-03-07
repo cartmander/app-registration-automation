@@ -1,119 +1,98 @@
 param(
-        [string]$displayName
+    [string]$name,
+    [string[]] $owners,
+    [string[]] $replyUrls
+)
+
+function AddApiPermissions
+{
+    param(
+        [string]$objectId
     )
 
-    function AzureLogin
-    {
-        $context = Get-AzContext
-        $token = Get-AzAccessToken -ResourceTypeName AadGraph
-        Connect-AzureAD -AadAccessToken $token.Token -AccountId $context.Account.Id -TenantId $context.Tenant.Id
-    }
-
-    function GetAzureADApplicationAppId
-    {
-        $aadApplication = Get-AzureADApplication -Filter "DisplayName eq '$displayName'"
-        $appId = $aadApplication.AppId
-    
-        return $appId
-    }
-    
-    function GetAzureADApplicationObjectId
-    {
-        $aadApplication = Get-AzureADApplication -Filter "DisplayName eq '$displayName'"
-        $appObjectId = $aadApplication.ObjectId
-    
-        return $appObjectId
-    }
-    
-    function CreateAppRegistration
-    {
-        $aadApplication = New-AzureADApplication -DisplayName $displayName #"IndigoMonitorApp-Automation"
-        $appId = $aadApplication.AppId
-        $appObjectId = $aadApplication.ObjectId
-
-        Add-AzureADApplicationOwner -ObjectId $appObjectId -RefObjectId "50a092f7-3eb3-4d89-b431-ebf8d1dbb447"
-    }
-    
-    function AddApiPermissions
-    {
-        $graphServicePrincipal =  Get-AzureADServicePrincipal -All $true | Where-Object {$_.DisplayName -eq "Microsoft Graph"}
+    $graphServicePrincipal =  Get-AzureADServicePrincipal -All $true | Where-Object {$_.DisplayName -eq "Microsoft Graph"}
         
-        $requiredGraphAccess = New-Object Microsoft.Open.AzureAD.Model.RequiredResourceAccess
-        $requiredGraphAccess.ResourceAppId = $graphServicePrincipal.AppId
-        $requiredGraphAccess.ResourceAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.ResourceAccess]
+    $requiredGraphAccess = New-Object Microsoft.Open.AzureAD.Model.RequiredResourceAccess
+    $requiredGraphAccess.ResourceAppId = $graphServicePrincipal.AppId
+    $requiredGraphAccess.ResourceAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.ResourceAccess]
     
-        $delegatedPermissions = @('profile', 'User.Read', 'User.ReadBasic.All')
+    $delegatedPermissions = @('profile', 'User.Read', 'User.ReadBasic.All')
         
-        foreach ($permission in $delegatedPermissions) 
+    foreach ($permission in $delegatedPermissions) 
+    {
+        $requestPermission = $null
+        $requestPermission = $graphServicePrincipal.Oauth2Permissions | Where-Object {$_.Value -eq $permission}
+    
+        if($requestPermission)
         {
-            $requestPermission = $null
-            $requestPermission = $graphServicePrincipal.Oauth2Permissions | Where-Object {$_.Value -eq $permission}
+            $resourceAccess = New-Object Microsoft.Open.AzureAD.Model.ResourceAccess
+            $resourceAccess.Type = "Scope"
+            $resourceAccess.Id = $requestPermission.Id    
     
-            if($requestPermission)
-            {
-                $resourceAccess = New-Object Microsoft.Open.AzureAD.Model.ResourceAccess
-                $resourceAccess.Type = "Scope"
-                $resourceAccess.Id = $requestPermission.Id    
-    
-                $requiredGraphAccess.ResourceAccess.Add($resourceAccess)
-            }
-    
-            else
-            {
-                Write-Host "Delegated permission $permission not found in the Graph Resource API" -ForegroundColor Red
-            }
+            $requiredGraphAccess.ResourceAccess.Add($resourceAccess)
         }
     
-        $requiredResourcesAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.RequiredResourceAccess]
-        $requiredResourcesAccess.Add($requiredGraphAccess)
+        else
+        {
+            Write-Host "Delegated permission $permission not found in the Graph Resource API" -ForegroundColor Red
+        }
+    }
+    
+    $requiredResourcesAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.RequiredResourceAccess]
+    $requiredResourcesAccess.Add($requiredGraphAccess)
         
-        $appObjectId = GetAzureADApplicationObjectId
-        Set-AzureADApplication -ObjectId $appObjectId -RequiredResourceAccess $requiredResourcesAccess
-    }
-    
-    function AddApplicationRoles
+    Set-AzureADApplication -ObjectId $objectId -RequiredResourceAccess $requiredResourcesAccess
+}
+
+function AddReplyUrls
+{
+    if ($replyUrls.Count -gt 0)
     {
-        $applicationRoles = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.AppRole]
-    
-        $administratorAppRole = [Microsoft.Open.AzureAD.Model.AppRole]::new()
-        $administratorAppRole.AllowedMemberTypes = New-Object System.Collections.Generic.List[string]
-        $administratorAppRole.AllowedMemberTypes.Add("User")
-        $administratorAppRole.DisplayName = "Administrator"
-        $administratorAppRole.Description = "Administrators have the ability to manage the entire system"
-        $administratorAppRole.Value = "administrator"
-        $administratorAppRole.Id = "d1c2ade8-98f8-45fd-aa4a-6d06b947c66f"
-        $administratorAppRole.IsEnabled = $true
-    
-        $monitorAppRole = [Microsoft.Open.AzureAD.Model.AppRole]::new()
-        $monitorAppRole.AllowedMemberTypes = New-Object System.Collections.Generic.List[string]
-        $monitorAppRole.AllowedMemberTypes.Add("User")
-        $monitorAppRole.DisplayName = "Monitor"
-        $monitorAppRole.Description = "Monitors have the ability to view system metrics"
-        $monitorAppRole.Value = "monitor"
-        $monitorAppRole.Id = "46c57e1b-a3ad-4647-8a18-c8da203fe70f"
-        $monitorAppRole.IsEnabled = $true
-    
-        $applicationRoles.Add($administratorAppRole)
-        $applicationRoles.Add($monitorAppRole)
-    
-        $appObjectId = GetAzureADApplicationObjectId
-        Set-AzureADApplication -ObjectId $appObjectId -AppRoles $applicationRoles
+        foreach($replyUrl in $replyUrls)
+        {
+            az ad app update --id $appId --add replyUrls $replyUrl
+        }
     }
+
+    else
+    {
+        az ad app update --id $appId --reply-urls "https://admin.indigo.willistowerswatson.com/signin-oidc"
+    }
+}
+
+
+$getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
+
+if ($getAADApplication -eq $null)
+{
+    $createAADApplication = az ad app create --display-name $name | ConvertFrom-Json
+
+    $appId = $createAADApplication.AppId
+    $objectId = $createAADApplication.ObjectId
+
+    #$appOwner = az ad user show --id "kevin.almario@willistowerswatson.com" | ConvertFrom-Json
+    #$appOwnerObjectId = $appOwner.ObjectId
     
-    #Main Program
-    AzureLogin
-    CreateAppRegistration
-    AddApiPermissions
-    AddApplicationRoles
-    
-    $appId = GetAzureADApplicationAppId
-    $appObjectId = GetAzureADApplicationObjectId
+    #az ad app owner add --id $getAADApplication.AppId --owner-object-id $appOwnerObjectId
+
+    #AddApiPermissions $objectId
 
     # Expose an API
     az ad app update --id $appId --set oauth2Permissions[0].isEnabled=false
     az ad app update --id $appId --set oauth2Permissions=[]
-    
-    Set-AzureADApplication -ObjectId $appObjectId -IdentifierUris "api://$appId"
-    
-    # Certificates and secrets
-    #New-AzureADApplicationPasswordCredential -CustomKeyIdentifier IndigoMonitorApp-Secret -ObjectId $appObjectId -EndDate ((Get-Date).AddMonths(12))
+    az ad app update --id $appId --set oauth2Permissions=@OAuth2Permissions.json
+
+    #Identifier URI
+    az ad app update --id $appId --identifier-uris "api://$appId"
+
+    # Authentication
+    AddReplyUrls
+
+    # App Roles
+    az ad app update --id $appId --app-roles `@AppRoles.json
+}
+else
+{
+    Write-Host "App registration with a name of '$name' already exists"
+    exit 1
+}

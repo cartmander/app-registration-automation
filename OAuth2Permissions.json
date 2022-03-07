@@ -1,0 +1,12 @@
+[
+    {
+      "adminConsentDescription": "Allows access to the site",
+      "adminConsentDisplayName": "Access the site as a user",
+      "id": "c9009fb3-bff1-4b6e-a508-7efbf3f1cdb9",
+      "isEnabled": true,
+      "type": "User",
+      "userConsentDescription": "Access the site",
+      "userConsentDisplayName": "Access the site",
+      "value": "access_as_user"
+    }
+  ]
