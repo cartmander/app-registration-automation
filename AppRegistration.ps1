@@ -1,5 +1,5 @@
 param(
-    [string]$name,
+    [string] $name,
     [string[]] $owners,
     [string[]] $replyUrls
 )
@@ -7,7 +7,7 @@ param(
 function AddOwners
 {
     param(
-        [string]$appId
+        [string] $appId
     )
 
     foreach ($owner in $owners)
@@ -25,7 +25,7 @@ function AddOwners
 function AddAPIPermissions
 {
     param(
-        [string]$appId
+        [string] $appId
     )
 
     $api = "00000003-0000-0000-c000-000000000000"
