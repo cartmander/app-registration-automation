@@ -4,44 +4,17 @@ param(
     [string[]] $replyUrls
 )
 
-function AddApiPermissions
+function AddAPIPermissions
 {
     param(
-        [string]$objectId
+        [string]$appId
     )
 
-    $graphServicePrincipal =  Get-AzureADServicePrincipal -All $true | Where-Object {$_.DisplayName -eq "Microsoft Graph"}
-        
-    $requiredGraphAccess = New-Object Microsoft.Open.AzureAD.Model.RequiredResourceAccess
-    $requiredGraphAccess.ResourceAppId = $graphServicePrincipal.AppId
-    $requiredGraphAccess.ResourceAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.ResourceAccess]
-    
-    $delegatedPermissions = @('profile', 'User.Read', 'User.ReadBasic.All')
-        
-    foreach ($permission in $delegatedPermissions) 
-    {
-        $requestPermission = $null
-        $requestPermission = $graphServicePrincipal.Oauth2Permissions | Where-Object {$_.Value -eq $permission}
-    
-        if($requestPermission)
-        {
-            $resourceAccess = New-Object Microsoft.Open.AzureAD.Model.ResourceAccess
-            $resourceAccess.Type = "Scope"
-            $resourceAccess.Id = $requestPermission.Id    
-    
-            $requiredGraphAccess.ResourceAccess.Add($resourceAccess)
-        }
-    
-        else
-        {
-            Write-Host "Delegated permission $permission not found in the Graph Resource API" -ForegroundColor Red
-        }
-    }
-    
-    $requiredResourcesAccess = New-Object System.Collections.Generic.List[Microsoft.Open.AzureAD.Model.RequiredResourceAccess]
-    $requiredResourcesAccess.Add($requiredGraphAccess)
-        
-    Set-AzureADApplication -ObjectId $objectId -RequiredResourceAccess $requiredResourcesAccess
+    $api = "00000003-0000-0000-c000-000000000000"
+
+    az ad app permission add --id $appId --api $api --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope
+    az ad app permission add --id $appId --api $api --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope
+    az ad app permission add --id $appId --api $api --api-permissions b340eb25-3456-403f-be2f-af7a0d370277=Scope
 }
 
 function AddOwners
@@ -101,7 +74,7 @@ if ($getAADApplication -eq $null)
     AddOwners $appId
 
     #API Permissions
-    #AddApiPermissions $objectId
+    AddAPIPermissions $appId
 
     # Expose an API
     UpdatePermissionsAndAPIs
