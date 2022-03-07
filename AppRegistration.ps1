@@ -78,6 +78,15 @@ function AddReplyUrls
     }
 }
 
+function UpdatePermissionsAndAPIs
+{
+    az ad app update --id $appId --set oauth2Permissions[0].isEnabled=false
+    az ad app update --id $appId --set oauth2Permissions=[]
+    az ad app update --id $appId --set oauth2Permissions=@OAuth2Permissions.json
+
+    #Identifier URI
+    az ad app update --id $appId --identifier-uris "api://$appId"
+}
 
 $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
 
@@ -92,15 +101,10 @@ if ($getAADApplication -eq $null)
     AddOwners $appId
 
     #API Permissions
-    #AddApiPermissions $objectId
+    AddApiPermissions $objectId
 
     # Expose an API
-    az ad app update --id $appId --set oauth2Permissions[0].isEnabled=false
-    az ad app update --id $appId --set oauth2Permissions=[]
-    az ad app update --id $appId --set oauth2Permissions=@OAuth2Permissions.json
-
-    #Identifier URI
-    az ad app update --id $appId --identifier-uris "api://$appId"
+    UpdatePermissionsAndAPIs
 
     # Authentication
     AddReplyUrls
