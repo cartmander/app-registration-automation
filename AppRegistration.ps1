@@ -108,6 +108,7 @@ if ($getAADApplication -eq $null)
     # App Roles
     az ad app update --id $appId --app-roles `@AppRoles.json
 }
+
 else
 {
     Write-Host "App registration with a name of '$name' already exists"
