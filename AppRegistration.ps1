@@ -49,7 +49,7 @@ function AddReplyUrls
 {
     if ($replyUrls.Count -gt 0)
     {
-        foreach($replyUrl in $replyUrls)
+        foreach ($replyUrl in $replyUrls)
         {
             az ad app update --id $appId --add replyUrls $replyUrl
         }
