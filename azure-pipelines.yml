@@ -6,10 +6,11 @@ name: Deploy App Registration Automation
 variables:
   - name: azureResourceManagerConnection
     value: 'ICO-DEV-SERVICE-CONN'
-  - name: displayName
+  - name: name
     value: 'IndigoMonitorApp-Automation'
-  - name: refObjectId
-    value: '50a092f7-3eb3-4d89-b431-ebf8d1dbb447'
+  - name: owners
+    value: "MICHA6273_adm@towerswatson.com", "KEVIN3349_ADM@willistowerswatson.com
+
 
 pool:
   vmImage: 'windows-latest'
@@ -30,6 +31,6 @@ steps:
     ScriptType: 'FilePath'
     ScriptPath: './AppRegistration.ps1'
     ScriptArguments: 
-      -displayName $(displayName)`
-      -refOjbectId $(refObjectId)
+      -name $(name)`
+      -owners $(owners)
     azurePowerShellVersion: 'LatestVersion'
