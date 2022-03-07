@@ -3,18 +3,6 @@
         "allowedMemberTypes": [
             "User"
         ],
-        "description": "Monitors have the ability to view system metrics",
-        "displayName": "Monitor",
-        "id": "46c57e1b-a3ad-4647-8a18-c8da203fe70f",
-        "isEnabled": true,
-        "lang": null,
-        "origin": "Application",
-        "value": "monitor"
-    },
-    {
-        "allowedMemberTypes": [
-            "User"
-        ],
         "description": "Administrators have the ability to manage the entire system",
         "displayName": "Administrator",
         "id": "d1c2ade8-98f8-45fd-aa4a-6d06b947c66f",
@@ -22,5 +10,17 @@
         "lang": null,
         "origin": "Application",
         "value": "administrator"
+    },
+    {
+        "allowedMemberTypes": [
+            "User"
+        ],
+        "description": "Monitors have the ability to view system metrics",
+        "displayName": "Monitor",
+        "id": "46c57e1b-a3ad-4647-8a18-c8da203fe70f",
+        "isEnabled": true,
+        "lang": null,
+        "origin": "Application",
+        "value": "monitor"
     }
   ]
