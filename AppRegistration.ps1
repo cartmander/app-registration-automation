@@ -101,7 +101,7 @@ if ($getAADApplication -eq $null)
     AddOwners $appId
 
     #API Permissions
-    AddApiPermissions $objectId
+    #AddApiPermissions $objectId
 
     # Expose an API
     UpdatePermissionsAndAPIs
