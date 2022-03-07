@@ -4,19 +4,6 @@ param(
     [string[]] $replyUrls
 )
 
-function AddAPIPermissions
-{
-    param(
-        [string]$appId
-    )
-
-    $api = "00000003-0000-0000-c000-000000000000"
-
-    az ad app permission add --id $appId --api $api --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope
-    az ad app permission add --id $appId --api $api --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope
-    az ad app permission add --id $appId --api $api --api-permissions b340eb25-3456-403f-be2f-af7a0d370277=Scope
-}
-
 function AddOwners
 {
     param(
@@ -33,6 +20,19 @@ function AddOwners
             az ad app owner add --id $appId --owner-object-id $ownerObjectId
         }
     }
+}
+
+function AddAPIPermissions
+{
+    param(
+        [string]$appId
+    )
+
+    $api = "00000003-0000-0000-c000-000000000000"
+
+    az ad app permission add --id $appId --api $api --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope
+    az ad app permission add --id $appId --api $api --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope
+    az ad app permission add --id $appId --api $api --api-permissions b340eb25-3456-403f-be2f-af7a0d370277=Scope
 }
 
 function UpdatePermissionsAndAPIs
