@@ -27,7 +27,7 @@ steps:
 - task: AzurePowerShell@5
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
-    ScriptType: InLineScript
+    ScriptType: InlineScript
     Inline: |
       $context = Get-AzContext
       $token = Get-AzAccessToken -ResourceTypeName AadGraph
