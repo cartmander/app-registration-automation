@@ -16,7 +16,7 @@ AppRegistration.ps1
 AppRegistrationSecret.ps1
 - appRegistrationNames - (arry of strings) - List of App registrations you want their secrets to be updated
 - keyVaultName - (string) (Optional) - The Key Vault where the secrets will be saved
-- replyUrls - (int) Duration of the secret (expiration)
+- duration - (int) Duration of the secret (expiration)
 
 
 ## Expected Output
