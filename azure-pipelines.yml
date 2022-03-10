@@ -27,6 +27,15 @@ steps:
 - task: AzurePowerShell@5
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
+    Inline: 
+      $context = Get-AzContext
+      $token = Get-AzAccessToken -ResourceTypeName AadGraph
+      Connect-AzureAD -AadAccessToken $token.Token -AccountId $context.Account.Id -TenantId $context.Tenant.Id
+    azurePowerShellVersion: 'LatestVersion'
+
+- task: AzurePowerShell@5
+  inputs:
+    azureSubscription: $(azureResourceManagerConnection)
     ScriptType: 'FilePath'
     ScriptPath: './AppRegistration.ps1'
     ScriptArguments: 
