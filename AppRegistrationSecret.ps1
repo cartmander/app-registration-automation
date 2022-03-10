@@ -16,6 +16,10 @@ function SecretDuration
 
 function GenerateSecretForAppRegistration
 {
+    param(
+        [string] $appId
+    )
+    
     $duration = SecretDuration
     $AADCertificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
 
@@ -46,9 +50,8 @@ foreach ($name in $appRegistrationNames)
     if ($getAADApplication -ne $null)
     {    
         $appId = $getAADApplication.AppId
-        $objectId = $getAADApplication.ObjectId
         
-        $secret = GenerateSecretForAppRegistration
+        $secret = GenerateSecretForAppRegistration $appId
         
         UploadSecretToKeyVault $secret
     }
