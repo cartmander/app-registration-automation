@@ -21,6 +21,7 @@ function GenerateSecretForAppRegistration
     )
     
     $duration = SecretDuration
+
     $AADCertificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
 
     $secret = az keyvault secret set --name $name --vault-name $keyVaultName --value $AADCertificate.password | ConvertFrom-Json
