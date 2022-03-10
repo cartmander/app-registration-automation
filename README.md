@@ -1,20 +1,24 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Azure App Registration Automation
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+App Registration - Running this Powershell automation will allow you to create an App registration by simply providing its name. Optionally, you can include a list of Owners and Redirect URIs that will be used by the App registration.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+Secret - There is also a dedicated script for appending / resetting App registration secrets using your specified list of App registrations and save these secrets to a Key Vault of your choice. By default, the duration for the secret is set to 1 year (minimum).
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## Powershell Parameters
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+Provide the following values as arguments:
+
+AppRegistration.ps1
+- name - (string) Name of App registration
+- owners - (array of strings) (Optional) List of owners to be included on App registration creation
+- replyUrls - (array of strings) (Optional) List of Redirect URIs to be included on App registration creation
+
+AppRegistrationSecret.ps1
+- appRegistrationNames - (arry of strings) - List of App registrations you want their secrets to be updated
+- keyVaultName - (string) (Optional) - The Key Vault where the secrets will be saved
+- replyUrls - (int) Duration of the secret (expiration)
+
+
+## Expected Output
+
+Upon running these scripts, it should be able to create an App registration and we should also be able to update App registration secrets and upload them to a specific Key Vault.
