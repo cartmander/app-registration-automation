@@ -4,6 +4,13 @@ param(
     [string[]] $replyUrls
 )
 
+function AzureLogin
+{
+    $context = Get-AzContext
+    $token = Get-AzAccessToken -ResourceTypeName AadGraph
+    Connect-AzureAD -AadAccessToken $token.Token -AccountId $context.Account.Id -TenantId $context.Tenant.Id
+}
+
 function AddOwners
 {
     param(
@@ -60,6 +67,8 @@ function AddReplyUrls
         az ad app update --id $appId --reply-urls "https://admin.indigo.willistowerswatson.com/signin-oidc"
     }
 }
+
+AzureLogin
 
 $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
 
