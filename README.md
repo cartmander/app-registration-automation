@@ -14,7 +14,7 @@ AppRegistration.ps1
 - replyUrls - (array of strings) (Optional) List of Redirect URIs to be included on App registration creation
 
 AppRegistrationSecret.ps1
-- appRegistrationNames - (arry of strings) - List of App registrations you want their secrets to be updated
+- appRegistrationNames - (array of strings) - List of App registrations you want their secrets to be updated
 - keyVaultName - (string) (Optional) - The Key Vault where the secrets will be saved
 - duration - (int) Duration of the secret (expiration)
 
