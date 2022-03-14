@@ -8,7 +8,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string] $subscription,
 
-    [string[]] $replyUrls,
+    [string[]] $replyUrls
 )
 
 function AddOwners
