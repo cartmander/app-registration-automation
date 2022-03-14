@@ -1,8 +1,11 @@
 param(
+    [Parameter(Mandatory=$true)]
     [string[]] $appRegistrationNames,
+    [Parameter(Mandatory=$true)]
     [string] $keyVaultName,
-    [int] $duration,
-    [string] $subscription
+    [Parameter(Mandatory=$true)]
+    [string] $subscription,
+    [int] $duration
 )
 
 function SecretDuration
@@ -44,10 +47,10 @@ function UploadSecretToKeyVault
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
-az account set --subscription $subscription
-
-if ($appRegistrationNames.Count -gt 0)
+try
 {
+    az account set --subscription $subscription
+
     foreach ($name in $appRegistrationNames)
     {
         $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
@@ -60,5 +63,15 @@ if ($appRegistrationNames.Count -gt 0)
         
             UploadSecretToKeyVault $secret $name
         }
+
+        else
+        {
+            Write-Host "App Registration '$name' does not exist."
+        }
     }
+}
+
+catch
+{
+    exit 1
 }
