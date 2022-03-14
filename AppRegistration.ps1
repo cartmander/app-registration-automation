@@ -1,7 +1,8 @@
 param(
     [string] $name,
     [string[]] $owners,
-    [string[]] $replyUrls
+    [string[]] $replyUrls,
+    [string] $subscription
 )
 
 function AddOwners
@@ -60,6 +61,8 @@ function AddReplyUrls
         az ad app update --id $appId --reply-urls "https://admin.indigo.willistowerswatson.com/signin-oidc"
     }
 }
+
+az account set --subscription $subscription
 
 $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
 

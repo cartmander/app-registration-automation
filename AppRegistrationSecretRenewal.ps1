@@ -1,7 +1,8 @@
 param(
     [string[]] $appRegistrationNames,
     [string] $keyVaultName,
-    [int] $duration
+    [int] $duration,
+    [string] $subscription
 )
 
 function SecretDuration
@@ -17,7 +18,8 @@ function SecretDuration
 function GenerateSecretForAppRegistration
 {
     param(
-        [string] $appId
+        [string] $appId,
+        [string] $name
     )
     
     $duration = SecretDuration
@@ -44,16 +46,21 @@ function UploadSecretToKeyVault
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
-foreach ($name in $appRegistrationNames)
-{
-    $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
+az account set --subscription $subscription
 
-    if ($getAADApplication -ne $null)
-    {    
-        $appId = $getAADApplication.AppId
+if ($appRegistrationNames.Count -gt 0)
+{
+    foreach ($name in $appRegistrationNames)
+    {
+        $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
+
+        if ($getAADApplication -ne $null)
+        {    
+            $appId = $getAADApplication.AppId
         
-        $secret = GenerateSecretForAppRegistration $appId
+            $secret = GenerateSecretForAppRegistration $appId $name
         
-        UploadSecretToKeyVault $secret
+            UploadSecretToKeyVault $secret
+        }
     }
 }
