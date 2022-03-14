@@ -14,7 +14,7 @@ AppRegistration.ps1
 - subscription - (string) - Azure subscription
 - replyUrls - (array of strings) (Optional) List of Redirect URIs to be included on App registration creation
 
-AppRegistrationSecret.ps1
+AppRegistrationSecretRenewal.ps1
 - appRegistrationNames - (array of strings) - List of App registrations that we want their secrets to be updated
 - keyVaultName - (string) - The Key Vault where the secrets will be saved
 - subscription - (string) - Azure subscription
