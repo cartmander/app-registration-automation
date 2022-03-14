@@ -18,23 +18,20 @@ function SecretDuration
 function GenerateSecretForAppRegistration
 {
     param(
-        [string] $appId,
-        [string] $name
+        [string] $appId
     )
     
     $duration = SecretDuration
+    $AADSecret = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
 
-    $AADCertificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
-
-    $secret = az keyvault secret set --name $name --vault-name $keyVaultName --value $AADCertificate.password | ConvertFrom-Json
-
-    return $secret
+    return $AADSecret
 }
 
 function UploadSecretToKeyVault
 {
     param(
-        [object] $secret
+        [object] $secret,
+        [string] $name
     )
 
     $createdDate = (Get-Date).ToUniversalTime()
@@ -42,7 +39,8 @@ function UploadSecretToKeyVault
 
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
-        
+
+    $secret = az keyvault secret set --name $name --vault-name $keyVaultName --value $secret.password | ConvertFrom-Json    
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
@@ -58,9 +56,9 @@ if ($appRegistrationNames.Count -gt 0)
         {    
             $appId = $getAADApplication.AppId
         
-            $secret = GenerateSecretForAppRegistration $appId $name
+            $secret = GenerateSecretForAppRegistration $appId
         
-            UploadSecretToKeyVault $secret
+            UploadSecretToKeyVault $secret $name
         }
     }
 }
