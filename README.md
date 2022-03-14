@@ -2,7 +2,7 @@
 
 App Registration - Running this Powershell automation will allow us to create an App registration by simply providing its name. Optionally, we can include a list of Owners and Redirect URIs that will be used by the App registration.
 
-Secret - There is also a dedicated script for appending / resetting App registration secrets using a specified list of App registrations and save these secrets to a Key Vault of our choice. By default, the duration for the secret is set to 1 year (minimum).
+Secret Renewal - There is also a dedicated script for appending / resetting App registration secrets using a specified list of App registrations and save these secrets to a Key Vault of our choice. By default, the duration for the secret is set to 1 year (minimum).
 
 ## Powershell Parameters
 
