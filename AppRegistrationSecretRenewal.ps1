@@ -1,10 +1,13 @@
 param(
     [Parameter(Mandatory=$true)]
     [string[]] $appRegistrationNames,
+
     [Parameter(Mandatory=$true)]
     [string] $keyVaultName,
+
     [Parameter(Mandatory=$true)]
     [string] $subscription,
+    
     [int] $duration
 )
 

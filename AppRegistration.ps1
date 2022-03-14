@@ -1,8 +1,14 @@
 param(
+    [Parameter(Mandatory=$true)]
     [string] $name,
+
+    [Parameter(Mandatory=$true)]
     [string[]] $owners,
+
+    [Parameter(Mandatory=$true)]
+    [string] $subscription,
+
     [string[]] $replyUrls,
-    [string] $subscription
 )
 
 function AddOwners
@@ -62,35 +68,43 @@ function AddReplyUrls
     }
 }
 
-az account set --subscription $subscription
-
-$getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
-
-if ($getAADApplication -eq $null)
+try
 {
-    $createAADApplication = az ad app create --display-name $name | ConvertFrom-Json
+    az account set --subscription $subscription
 
-    $appId = $createAADApplication.AppId
-    $objectId = $createAADApplication.ObjectId
-
-    #Owners
-    AddOwners $appId
-
-    #API Permissions
-    AddApiPermissions $appId
-
-    # Expose an API
-    UpdatePermissionsAndApis
-
-    # Authentication
-    AddReplyUrls
-
-    # App Roles
-    az ad app update --id $appId --app-roles `@AppRoles.json
+    $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
+    
+    if ($getAADApplication -eq $null)
+    {
+        $createAADApplication = az ad app create --display-name $name | ConvertFrom-Json
+    
+        $appId = $createAADApplication.AppId
+        $objectId = $createAADApplication.ObjectId
+    
+        #Owners
+        AddOwners $appId
+    
+        #API Permissions
+        AddApiPermissions $appId
+    
+        # Expose an API
+        UpdatePermissionsAndApis
+    
+        # Authentication
+        AddReplyUrls
+    
+        # App Roles
+        az ad app update --id $appId --app-roles `@AppRoles.json
+    }
+    
+    else
+    {
+        Write-Host "App registration with a name of '$name' already exists"
+        exit 1
+    }
 }
 
-else
+catch
 {
-    Write-Host "App registration with a name of '$name' already exists"
     exit 1
 }
