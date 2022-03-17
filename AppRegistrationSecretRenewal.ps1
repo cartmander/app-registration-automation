@@ -13,7 +13,7 @@ param(
 
 function SecretDuration
 {
-    if ($duration -eq $null -or $duration -lt 1)
+    if ($null -eq $duration -or $duration -lt 1)
     {
         $duration = 1
     }
@@ -58,7 +58,7 @@ try
     {
         $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
 
-        if ($getAADApplication -ne $null)
+        if ($null -ne $getAADApplication)
         {    
             $appId = $getAADApplication.AppId
         

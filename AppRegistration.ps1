@@ -21,7 +21,7 @@ function AddOwners
     {
         $appOwner = az ad user show --id $owner | ConvertFrom-Json
 
-        if($appOwner -ne $null)
+        if($null -ne $appOwner)
         {
             $ownerObjectId = $appOwner.ObjectId
             az ad app owner add --id $appId --owner-object-id $ownerObjectId
@@ -74,12 +74,11 @@ try
 
     $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
     
-    if ($getAADApplication -eq $null)
+    if ($null -eq $getAADApplication)
     {
         $createAADApplication = az ad app create --display-name $name | ConvertFrom-Json
     
         $appId = $createAADApplication.AppId
-        $objectId = $createAADApplication.ObjectId
     
         #Owners
         AddOwners $appId
