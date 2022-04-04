@@ -5,7 +5,7 @@ param(
     [int] $duration
 )
 
-function SecretDuration
+function GetClientSecretDuration
 {
     if ($null -eq $duration -or $duration -lt 1)
     {
@@ -48,7 +48,7 @@ function SetClientSecretName
 
 function GetAppIdsFromKeyVaults
 {
-    $appIdList = @{}
+    $appIdDictionary = @{}
     
     $keyVaults = az keyvault list | ConvertFrom-Json
 
@@ -56,56 +56,90 @@ function GetAppIdsFromKeyVaults
     {
         $keyVaultName = $keyVault.name
 
-        $keyVaultSecrets = az keyvault secret list --vault-name $keyVaultName --query "[?ends_with(name, 'AzureAD--ClientId') || ends_with(name, 'AzureAd--ClientId')]" | ConvertFrom-Json
-
-        if ($null -ne $keyVaultSecrets)
+        try
         {
-            foreach ($keyVaultSecret in $keyVaultSecrets)
+            $keyVaultSecretList = az keyvault secret list --vault-name $keyVaultName --query "[?ends_with(name, 'AzureAD--ClientId') || ends_with(name, 'AzureAd--ClientId')]" | ConvertFrom-Json
+
+            if (!([string]::IsNullOrEmpty($keyVaultSecretList)))
             {
-                $keyVaultClientIdName = $keyVaultSecret.name
-                $showKeyVaultSecret = az keyvault secret show --vault-name $keyVaultName --name $keyVaultClientIdName | ConvertFrom-Json
-                
-                $getAADApplication = az ad app show --id $showKeyVaultSecret.value | ConvertFrom-Json
-                    
-                if($null -ne $getAADApplication)
+                foreach ($keyVaultSecret in $keyVaultSecretList)
                 {
-                    $appIdList.Add($keyVaultClientIdName, $getAADApplication.appId)
+                    $keyVaultClientIdName = $keyVaultSecret.name
+                    $keyVaultClientIdValue = az keyvault secret show --vault-name $keyVaultName --name $keyVaultClientIdName | ConvertFrom-Json
+                
+                    $getAADApplication = az ad app show --id $keyVaultClientIdValue.value | ConvertFrom-Json
+                    
+                    if(!([string]::IsNullOrEmpty($getAADApplication)))
+                    {
+                        $appIdDictionary.Add($keyVaultClientIdName, $getAADApplication.appId)
+                    }
                 }
+            }
+        }
+
+        catch
+        {
+        }
+    }
+
+    return $appIdDictionary
+}
+
+function AddOrRenewCertificate
+{
+    param(
+        [object] $certificateList,
+        [string] $appId
+    )
+
+    if(![string]::IsNullOrEmpty($certificateList))
+    {
+        foreach($certificate in $certificateList)
+        {
+            $currentDate = Get-Date
+            $certificateEndDate = $certificate.endDate
+
+            $timeDifference = New-TimeSpan -Start $currentDate -End $certificateEndDate
+
+            if(!([string]::IsNullOrEmpty($certificateEndDate)) -and $timeDifference -le 7)
+            {
+                $duration = GetClientSecretDuration
+                $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
             }
         }
     }
 
-    return $appIdList
-}
-
-function AddOrRenewAppRegistrationsCertificate
-{
-    param(
-        [string[]] $appIdList
-    )
-
-    foreach($appId in $appIdList)
+    else
     {
-        $certificateList = az ad app credential list --id $appId | ConvertFrom-Json
-
-        foreach ($certificate in $certificateList)
-        {
-            
-        }
+        $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
     }
 
+    return $certificate
 }
 
-function GenerateSecretForAppRegistration
+function GetAppRegistrationCredentials
 {
     param(
-        [string] $appId
+        [hashtable] $appIdDictionary
     )
-    
-    $duration = SecretDuration
-    $AADSecret = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
 
-    return $AADSecret
+    foreach($appIdKeyPair in $appIdDictionary.GetEnumerator())
+    {
+        $clientIdName = $appIdKeyPair.Key
+        $appId = $appIdKeyPair.Value
+
+        try
+        {
+            $certificateList = az ad app credential list --id $appId | ConvertFrom-Json
+
+            AddOrRenewCertificate $certificateList $appId
+
+        }
+
+        catch
+        {
+        }
+    }
 }
 
 function UploadSecretToKeyVault
@@ -129,9 +163,9 @@ try
 {
     az account set --subscription $subscription
     
-    $appIdList = GetAppIdsFromKeyVaults
-    Write-Host "eto na"
-    Write-Host $appIdList
+    $appIdDictionary = GetAppIdsFromKeyVaults
+
+    AddOrRenewAppRegistrationsCertificate $appIdDictionary
 }
 
 catch
