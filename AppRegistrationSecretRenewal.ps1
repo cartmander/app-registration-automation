@@ -5,50 +5,9 @@ param(
     [int] $duration
 )
 
-function GetClientSecretDuration
-{
-    if ($null -eq $duration -or $duration -lt 1)
-    {
-        $duration = 1
-    }
-
-    return $duration
-}
-
-function SetClientSecretName
-{
-    param(
-        [string] $keyVaultName
-    )
-
-    $prefix = "AzureAD--ClientId"
-
-    if ($keyVaultName.Contains("AzureAd--ClientId"))
-    {
-        
-    }
-
-
-    if ($keyVaultName.Contains("AzureAd--ClientId"))
-    {
-        $prefix = $keyVaultName.Substring(0, $keyVaultName.IndexOf('AzureAd--ClientId'))
-        $clientSecret = "$prefix-AzureAd--ClientSecret"
-        $appIdList += @{$virtualMachineId=$getAADApplication.appId}
-    }
-
-    elif ($keyVaultName.Contains("AzureAD--ClientId"))
-    {
-        $prefix = $keyVaultName.Substring(0, $keyVaultName.IndexOf('AzureAD--ClientId'))
-        $clientSecret = "$prefix-AzureAD--ClientSecret"
-        $appIdList += @{$clientSecret=$getAADApplication.appId}
-    }
-    
-    return $clientSecretName
-}
-
 function GetAppIdsFromKeyVaults
 {
-    $appIdDictionary = @{}
+    $appIdsDictionary = @{}
     
     $keyVaults = az keyvault list | ConvertFrom-Json
 
@@ -71,7 +30,7 @@ function GetAppIdsFromKeyVaults
                     
                     if(!([string]::IsNullOrEmpty($getAADApplication)))
                     {
-                        $appIdDictionary.Add($keyVaultClientIdName, $getAADApplication.appId)
+                        $appIdsDictionary.Add($keyVaultClientIdName, $getAADApplication.appId)
                     }
                 }
             }
@@ -82,7 +41,17 @@ function GetAppIdsFromKeyVaults
         }
     }
 
-    return $appIdDictionary
+    return $appIdsDictionary
+}
+
+function GetClientSecretDuration
+{
+    if ($null -eq $duration -or $duration -lt 1)
+    {
+        $duration = 1
+    }
+
+    return $duration
 }
 
 function AddOrRenewCertificate
@@ -117,13 +86,51 @@ function AddOrRenewCertificate
     return $certificate
 }
 
-function GetAppRegistrationCredentials
+function SetClientSecretName
 {
     param(
-        [hashtable] $appIdDictionary
+        [string] $clientIdName
     )
 
-    foreach($appIdKeyPair in $appIdDictionary.GetEnumerator())
+    $prefix = "AzureAD--ClientId"
+
+    if ($clientIdName.Contains("AzureAd--ClientId"))
+    {
+        $prefix = "AzureAd--ClientId"
+    }
+
+    $prefix = $clientIdName.Substring(0, $clientIdName.IndexOf($prefix))
+    $clientSecretName = "$prefix-AzureAD--ClientSecret"
+    
+    return $clientSecretName
+}
+
+function UploadCertificateToKeyVault
+{
+    param(
+        [object] $certificate,
+        [string] $clientIdName
+    )
+
+    $clientSecretName = SetClientSecretName $clientIdName
+
+    $createdDate = (Get-Date).ToUniversalTime()
+    $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
+
+    $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
+    $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
+
+    $certificate = az keyvault secret set --name $clientSecretName --vault-name $keyVaultName --value $certificate.password | ConvertFrom-Json    
+    az keyvault secret set-attributes --id $certificate.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
+}
+
+function GetAppRegistrationCredentialsForRenewal
+{
+    param(
+        [hashtable] $appIdsDictionary
+    )
+
+    foreach($appIdKeyPair in $appIdsDictionary.GetEnumerator())
     {
         $clientIdName = $appIdKeyPair.Key
         $appId = $appIdKeyPair.Value
@@ -131,9 +138,9 @@ function GetAppRegistrationCredentials
         try
         {
             $certificateList = az ad app credential list --id $appId | ConvertFrom-Json
+            $certificate = AddOrRenewCertificate $certificateList $appId
 
-            AddOrRenewCertificate $certificateList $appId
-
+            UploadCertificateToKeyVault $certificate $clientIdName
         }
 
         catch
@@ -142,33 +149,15 @@ function GetAppRegistrationCredentials
     }
 }
 
-function UploadSecretToKeyVault
-{
-    param(
-        [object] $secret,
-        [string] $name
-    )
-
-    $createdDate = (Get-Date).ToUniversalTime()
-    $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
-
-    $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
-    $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
-
-    $secret = az keyvault secret set --name $name --vault-name $keyVaultName --value $secret.password | ConvertFrom-Json    
-    az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
-}
-
 try
 {
     az account set --subscription $subscription
     
-    $appIdDictionary = GetAppIdsFromKeyVaults
+    $appIdsDictionary = GetAppIdsFromKeyVaults
 
-    AddOrRenewAppRegistrationsCertificate $appIdDictionary
+    GetAppRegistrationCredentialsForRenewal $appIdsDictionary
 }
 
 catch
 {
-
 }
