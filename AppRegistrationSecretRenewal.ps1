@@ -30,7 +30,7 @@ function GetAppIdsFromKeyVaults
                     
                     if(!([string]::IsNullOrEmpty($getAADApplication)))
                     {
-                        $appIdsDictionary.Add($keyVaultClientIdName, $getAADApplication.appId)
+                        $appIdsDictionary.Add("$keyVaultClientIdName = $keyVaultName", $getAADApplication.appId)
                     }
                 }
             }
@@ -92,17 +92,29 @@ function SetClientSecretName
         [string] $clientIdName
     )
 
-    $prefix = "AzureAD--ClientId"
+    $suffix = "AzureAD--ClientId"
 
     if ($clientIdName.Contains("AzureAd--ClientId"))
     {
-        $prefix = "AzureAd--ClientId"
+        $suffix = "AzureAd--ClientId"
     }
 
-    $prefix = $clientIdName.Substring(0, $clientIdName.IndexOf($prefix))
+    $prefix = $clientIdName.Substring(0, $clientIdName.IndexOf($suffix))
     $clientSecretName = "$prefix-AzureAD--ClientSecret"
     
     return $clientSecretName
+}
+
+function SetKeyVaultName
+{
+    param(
+        [string] $clientIdName
+    )
+
+    $split = $clientIdName.Split("=")
+    $keyVaultName = $split[1].Replace(' ', '')
+    
+    return $keyVaultName
 }
 
 function UploadCertificateToKeyVault
@@ -113,6 +125,7 @@ function UploadCertificateToKeyVault
     )
 
     $clientSecretName = SetClientSecretName $clientIdName
+    $keyVaultName = SetKeyVaultName $clientIdName
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
