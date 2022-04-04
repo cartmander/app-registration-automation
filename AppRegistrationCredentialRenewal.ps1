@@ -101,7 +101,6 @@ function SetClientSecretName
 
     elseif ($clientIdName.Contains("AzureAD--ClientId"))
     {
-        Write-Host "aw"
         $suffix = "AzureAD--ClientId"
         $prefix = $clientIdName.Substring(0, $clientIdName.IndexOf($suffix))
         $clientSecretName = "$prefix-AzureAD--ClientSecret"
