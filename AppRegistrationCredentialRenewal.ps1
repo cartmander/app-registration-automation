@@ -69,7 +69,7 @@ function AddOrRenewAppRegistrationCredentials
         $duration = GetClientSecretDuration
         $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
 
-        UploadCertificateToKeyVault $certificate clientIdName
+        UploadCertificateToKeyVault $certificate $clientIdName
     }
 }
 
