@@ -63,8 +63,8 @@ function AddOrRenewAppRegistrationCredentials
 
     foreach ($appRegistration in $appRegistrations)
     {
-        $appId = GetFirstIndexSplitByDelimeter $appRegistration
-        $clientIdName = GetSecondIndexSplitByDelimeter $appRegistration
+        $appId = GetIndexSplitByDelimeter $appRegistration 0
+        $clientIdName = GetIndexSplitByDelimeter $appRegistration 1
 
         $duration = GetClientSecretDuration
         $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
@@ -96,28 +96,17 @@ function SetClientSecretName
     return $clientSecretName
 }
 
-function GetFirstIndexSplitByDelimeter
+function GetIndexSplitByDelimeter
 {
     param(
-        [string] $key
+        [string] $key,
+        [int] $index
     )
 
     $splittedKey = $key.Split("~")
-    $firstIndex = $splittedKey[0].Replace(' ', '')
+    $index = $splittedKey[$index].Replace(' ', '')
     
-    return $firstIndex
-}
-
-function GetSecondIndexSplitByDelimeter
-{
-    param(
-        [string] $key
-    )
-
-    $splittedKey = $key.Split("~")
-    $secondIndex = $splittedKey[1].Replace(' ', '')
-    
-    return $secondIndex
+    return $index
 }
 
 function UploadCertificateToKeyVault
@@ -128,7 +117,7 @@ function UploadCertificateToKeyVault
     )
 
     $clientSecretName = SetClientSecretName $clientIdName
-    $keyVaultName = GetFirstIndexSplitByDelimeter $clientIdName
+    $keyVaultName = GetIndexSplitByDelimeter $clientIdName 0
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
