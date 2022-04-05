@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory=$true)]
     [string] $subscription,
-    [bool] $updateCredentials,
+    [Parameter(Mandatory=$true)]
+    [bool] $shouldUpdate,
     [int] $duration
 )
 
@@ -54,36 +55,22 @@ function GetClientSecretDuration
     return $duration
 }
 
-function AddOrRenewCertificate
+function AddOrRenewAppRegistrationCredentials
 {
     param(
-        [object] $certificateList,
-        [string] $appId
+        [object] $appRegistrations
     )
 
-    if(![string]::IsNullOrEmpty($certificateList))
+    foreach ($appRegistration in $appRegistrations)
     {
-        foreach($certificate in $certificateList)
-        {
-            $currentDate = Get-Date
-            $certificateEndDate = $certificate.endDate
+        $appId = GetFirstIndexSplitByDelimeter $appRegistration
+        $clientIdName = GetSecondIndexSplitByDelimeter $appRegistration
 
-            $timeDifference = New-TimeSpan -Start $currentDate -End $certificateEndDate
-
-            if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifference -le 7)
-            {
-                $duration = GetClientSecretDuration
-                $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
-            }
-        }
-    }
-
-    else
-    {
+        $duration = GetClientSecretDuration
         $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json
-    }
 
-    return $certificate
+        UploadCertificateToKeyVault $certificate clientIdName
+    }
 }
 
 function SetClientSecretName
@@ -109,16 +96,28 @@ function SetClientSecretName
     return $clientSecretName
 }
 
-function SetKeyVaultName
+function GetFirstIndexSplitByDelimeter
 {
     param(
-        [string] $clientIdName
+        [string] $key
     )
 
-    $split = $clientIdName.Split("~")
-    $keyVaultName = $split[0].Replace(' ', '')
+    $splittedKey = $key.Split("~")
+    $firstIndex = $splittedKey[0].Replace(' ', '')
     
-    return $keyVaultName
+    return $firstIndex
+}
+
+function GetSecondIndexSplitByDelimeter
+{
+    param(
+        [string] $key
+    )
+
+    $splittedKey = $key.Split("~")
+    $secondIndex = $splittedKey[1].Replace(' ', '')
+    
+    return $secondIndex
 }
 
 function UploadCertificateToKeyVault
@@ -129,7 +128,7 @@ function UploadCertificateToKeyVault
     )
 
     $clientSecretName = SetClientSecretName $clientIdName
-    $keyVaultName = SetKeyVaultName $clientIdName
+    $keyVaultName = GetFirstIndexSplitByDelimeter $clientIdName
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -150,10 +149,6 @@ function GetAppRegistrationCredentialsDictionary
     )
 
     $certificateList = az ad app credential list --id $appId | ConvertFrom-Json
-    $keyVaultName = SetKeyVaultName $clientIdName
-
-    $AADApplication = az ad app show --id $appId | ConvertFrom-Json
-    $AADApplicationName = $AADApplication.displayName
 
     if(![string]::IsNullOrEmpty($certificateList))
     {
@@ -161,16 +156,20 @@ function GetAppRegistrationCredentialsDictionary
         {
             $currentDate = Get-Date
             $certificateEndDate = $certificate.endDate
-            $certificateKeyId = $certificate.keyId
 
             $timeDifference = New-TimeSpan -Start $currentDate -End $certificateEndDate
             $timeDifferenceInDays = $timeDifference.Days
 
             if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifferenceInDays -le 30)
             {
-                $appRegistrationCredentialsDictionary.Add("$keyVaultName - $AADApplicationName - $certificateKeyId", "$timeDifferenceInDays days")
+                $appRegistrationCredentialsDictionary.Add("$appId ~ $clientIdName", "$timeDifferenceInDays days")
             }
         }
+    }
+
+    else
+    {
+        $appRegistrationCredentialsDictionary.Add("$appId ~ --", "No certificate yet")
     }
 
     return $appRegistrationCredentialsDictionary
@@ -189,14 +188,7 @@ function GetAppRegistrationCredentialsForRenewal
         $clientIdName = $appIdKeyPair.Key
         $appId = $appIdKeyPair.Value
 
-        try
-        {
-            $appRegistrationCredentialsDictionary = GetAppRegistrationCredentialsDictionary $appRegistrationCredentialsDictionary $appId $clientIdName
-        }
-
-        catch
-        {
-        }
+        $appRegistrationCredentialsDictionary = GetAppRegistrationCredentialsDictionary $appRegistrationCredentialsDictionary $appId $clientIdName
     }
 
     return $appRegistrationCredentialsDictionary
@@ -210,11 +202,10 @@ try
 
     $appRegistrationCredentials = GetAppRegistrationCredentialsForRenewal $appIds
 
-    Write-Host $appIds.Keys
-    Write-Host $appIds.Values
-    Write-Host " "
-    Write-Host $appRegistrationCredentials.Keys
-    Write-Host $appRegistrationCredentials.Values
+    if($true -eq $shouldUpdate)
+    {
+        AddOrRenewAppRegistrationCredentials $appRegistrationCredentials.Keys
+    }
 }
 
 catch
