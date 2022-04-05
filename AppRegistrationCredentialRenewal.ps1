@@ -110,7 +110,7 @@ function GetAppRegistrationCredentialsDictionary
             $timeDifference = New-TimeSpan -Start $currentDate -End $certificateEndDate
             $timeDifferenceInDays = $timeDifference.Days
 
-            if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifferenceInDays -le 9000000)
+            if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifferenceInDays -le 30)
             {
                 $appRegistrationCredentialsDictionary.Add("$clientIdName ~ $appId", "$timeDifferenceInDays days")
             }
