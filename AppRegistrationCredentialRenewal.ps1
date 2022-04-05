@@ -198,8 +198,6 @@ try
 
     $appRegistrationCredentials = GetAppRegistrationCredentialsForRenewal $appIds
 
-    $appRegistrationCredentials.Keys
-
     if($true -eq $shouldUpdate)
     {
         AddOrRenewAppRegistrationCredentials $appRegistrationCredentials.Keys
