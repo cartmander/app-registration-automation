@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory=$true)]
     [string] $subscription,
-    
+    [bool] $updateCredentials,
     [int] $duration
 )
 
@@ -26,11 +26,11 @@ function GetAppIdsFromKeyVaults
                     $keyVaultClientIdName = $keyVaultSecret.name
                     $keyVaultClientIdValue = az keyvault secret show --vault-name $keyVaultName --name $keyVaultClientIdName | ConvertFrom-Json
                 
-                    $getAADApplication = az ad app show --id $keyVaultClientIdValue.value | ConvertFrom-Json
+                    $AADApplication = az ad app show --id $keyVaultClientIdValue.value | ConvertFrom-Json
                     
-                    if(![string]::IsNullOrEmpty($getAADApplication))
+                    if(![string]::IsNullOrEmpty($AADApplication))
                     {
-                        $appIdsDictionary.Add("$keyVaultClientIdName = $keyVaultName", $getAADApplication.appId)
+                        $appIdsDictionary.Add("$keyVaultName ~ $keyVaultClientIdName", $AADApplication.appId)
                     }
                 }
             }
@@ -115,8 +115,8 @@ function SetKeyVaultName
         [string] $clientIdName
     )
 
-    $split = $clientIdName.Split("=")
-    $keyVaultName = $split[1].Replace(' ', '')
+    $split = $clientIdName.Split("~")
+    $keyVaultName = $split[0].Replace(' ', '')
     
     return $keyVaultName
 }
@@ -141,38 +141,80 @@ function UploadCertificateToKeyVault
     az keyvault secret set-attributes --id $certificate.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
+function GetAppRegistrationCredentialsDictionary
+{
+    param(
+        [hashtable] $appRegistrationCredentialsDictionary,
+        [string] $appId,
+        [string] $clientIdName
+    )
+
+    $certificateList = az ad app credential list --id $appId | ConvertFrom-Json
+    $keyVaultName = SetKeyVaultName $clientIdName
+
+    $AADApplication = az ad app show --id $appId | ConvertFrom-Json
+    $AADApplicationName = $AADApplication.displayName
+
+    if(![string]::IsNullOrEmpty($certificateList))
+    {
+        foreach($certificate in $certificateList)
+        {
+            $currentDate = Get-Date
+            $certificateEndDate = $certificate.endDate
+            $certificateKeyId = $certificate.keyId
+
+            $timeDifference = New-TimeSpan -Start $currentDate -End $certificateEndDate
+            $timeDifferenceInDays = $timeDifference.Days
+
+            if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifferenceInDays -le 30)
+            {
+                $appRegistrationCredentialsDictionary.Add("$keyVaultName - $AADApplicationName - $certificateKeyId", "$timeDifferenceInDays days")
+            }
+        }
+    }
+
+    return $appRegistrationCredentialsDictionary
+}
+
 function GetAppRegistrationCredentialsForRenewal
 {
     param(
         [hashtable] $appIdsDictionary
     )
 
-    foreach($appIdKeyPair in $appIdsDictionary.GetEnumerator())
+    $appRegistrationCredentialsDictionary = @{}
+
+    foreach ($appIdKeyPair in $appIdsDictionary.GetEnumerator())
     {
         $clientIdName = $appIdKeyPair.Key
         $appId = $appIdKeyPair.Value
 
         try
         {
-            $certificateList = az ad app credential list --id $appId | ConvertFrom-Json
-            $certificate = AddOrRenewCertificate $certificateList $appId
-
-            UploadCertificateToKeyVault $certificate $clientIdName
+            $appRegistrationCredentialsDictionary = GetAppRegistrationCredentialsDictionary $appRegistrationCredentialsDictionary $appId $clientIdName
         }
 
         catch
         {
         }
     }
+
+    return $appRegistrationCredentialsDictionary
 }
 
 try
 {
     az account set --subscription $subscription
     
-    $appIdsDictionary = GetAppIdsFromKeyVaults
+    $appIds = GetAppIdsFromKeyVaults
 
-    GetAppRegistrationCredentialsForRenewal $appIdsDictionary
+    $appRegistrationCredentials = GetAppRegistrationCredentialsForRenewal $appIds
+
+    Write-Host $appIds.Keys
+    Write-Host $appIds.Values
+    Write-Host " "
+    Write-Host $appRegistrationCredentials.Keys
+    Write-Host $appRegistrationCredentials.Values
 }
 
 catch
