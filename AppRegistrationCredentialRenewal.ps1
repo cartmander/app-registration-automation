@@ -19,23 +19,23 @@ function GetClientSecretDuration
 function SetClientSecretName
 {
     param(
-        [string] $clientIdName
+        [string] $clientId
     )
 
-    if ($clientIdName.Contains("AzureAd--ClientId"))
+    if ($clientId.Contains("AzureAd--ClientId"))
     {
         $suffix = "AzureAd--ClientId"
-        $prefix = $clientIdName.Substring(0, $clientIdName.IndexOf($suffix))
+        $prefix = $clientId.Substring(0, $clientId.IndexOf($suffix))
         $clientSecretName = "$prefix-AzureAd--ClientSecret"
     }
 
-    elseif ($clientIdName.Contains("AzureAD--ClientId"))
+    elseif ($clientId.Contains("AzureAD--ClientId"))
     {
         $suffix = "AzureAD--ClientId"
-        $prefix = $clientIdName.Substring(0, $clientIdName.IndexOf($suffix))
+        $prefix = $clientId.Substring(0, $clientId.IndexOf($suffix))
         $clientSecretName = "$prefix-AzureAD--ClientSecret"
     }   
-    
+
     return $clientSecretName
 }
 
@@ -44,10 +44,10 @@ function UploadCertificateToKeyVault
     param(
         [object] $appRegistrationCredential,
         [object] $certificate,
-        [string] $keyVaultclientId
+        [string] $keyVaultClientId
     )
-
-    $keyVaultClientSecret = SetClientSecretName $keyVaultclientId
+    
+    $keyVaultClientSecret = SetClientSecretName $keyVaultClientId #umay
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -69,9 +69,11 @@ function AddOrRenewAppRegistrationCredentials
     {
         $duration = GetClientSecretDuration
 
-        $certificate = az ad app credential reset --id $appRegistrationKey.AppRegistrationId --years $duration | ConvertFrom-Json
+        $keyVaultClientId = $appRegistrationCredential.KeyVaultClientId.ToString()
+
+        $certificate = az ad app credential reset --id $appRegistrationCredential.AppRegistrationId --years $duration | ConvertFrom-Json
         
-        UploadCertificateToKeyVault $certificate $appRegistrationCredential.KeyVaultClientId
+        UploadCertificateToKeyVault $certificate $keyVaultClientId
     }
 }
 
@@ -89,7 +91,7 @@ function GetAppRegistrationListForRenewal
         {            
             $certificateList = az ad app credential list --id $appRegistration.AppRegistrationId | ConvertFrom-Json
 
-            if(![string]::IsNullOrEmpty($certificateList))
+            if(![string]::IsNullOrEmpty($certificateList) -or $null -ne $certificateList)
             {
                 foreach($certificate in $certificateList)
                 {
@@ -140,10 +142,9 @@ function GetAppRegistrationList
             {
                 foreach ($keyVaultSecret in $keyVaultSecretList)
                 {
-                    $keyVaultClientIdName = $keyVaultSecret.name
-                    $keyVaultClientIdValue = az keyvault secret show --vault-name $keyVaultName --name $keyVaultClientIdName | ConvertFrom-Json
+                    $keyVaultClientId = az keyvault secret show --vault-name $keyVaultName --name $keyVaultSecret.name | ConvertFrom-Json
                 
-                    $AADApplication = az ad app show --id $keyVaultClientIdValue.value | ConvertFrom-Json
+                    $AADApplication = az ad app show --id $keyVaultClientId.value | ConvertFrom-Json
                     
                     if(![string]::IsNullOrEmpty($AADApplication))
                     {
@@ -151,7 +152,7 @@ function GetAppRegistrationList
                             'AppRegistrationId'   = $AADApplication.appId
                             'AppRegistrationName' = $AADApplication.displayName
                             'KeyVault' = $keyVaultName
-                            'KeyVaultClientId' = $keyVaultClientIdName
+                            'KeyVaultClientId' = $keyVaultSecret.name
                         }
 
                         $appRegistrationList += $appRegistration
