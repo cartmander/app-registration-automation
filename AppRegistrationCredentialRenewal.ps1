@@ -42,12 +42,12 @@ function SetClientSecretName
 function UploadCertificateToKeyVault
 {
     param(
+        [object] $appRegistrationCredential,
         [object] $certificate,
-        [string] $clientIdName
+        [string] $keyVaultclientId
     )
 
-    $clientSecretName = SetClientSecretName $clientIdName
-    $keyVaultName = GetStringByDelimeter $clientIdName 1
+    $keyVaultClientSecret = SetClientSecretName $keyVaultclientId
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -55,37 +55,33 @@ function UploadCertificateToKeyVault
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $certificate = az keyvault secret set --name $clientSecretName --vault-name $keyVaultName --value $certificate.password | ConvertFrom-Json    
+    $certificate = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationCredential.KeyVault --value $certificate.password | ConvertFrom-Json    
     az keyvault secret set-attributes --id $certificate.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
 function AddOrRenewAppRegistrationCredentials
 {
     param(
-        [hashtable] $appRegistrations
+        [object[]] $appRegistrationCredentialList
     )
 
-    foreach ($appRegistration in $appRegistrations.GetEnumerator())
+    foreach ($appRegistrationCredential in $appRegistrationCredentialList)
     {
-        $appRegistrationKey = $appRegistration.Key
-
-        $appId = GetStringByDelimeter $appRegistrationKey 1
-        $clientIdName = GetStringByDelimeter $appRegistrationKey 0
-
         $duration = GetClientSecretDuration
-        $certificate = az ad app credential reset --id $appId --years $duration | ConvertFrom-Json #we need appid :(
+
+        $certificate = az ad app credential reset --id $appRegistrationKey.AppRegistrationId --years $duration | ConvertFrom-Json
         
-        UploadCertificateToKeyVault $certificate $clientIdName
+        UploadCertificateToKeyVault $certificate $appRegistrationCredential.KeyVaultClientId
     }
 }
 
 function GetAppRegistrationListForRenewal
 {
-    $appRegistrationListForRenewal = @()
-
     param(
         [object[]] $appRegistrationList
     )
+
+    $appRegistrationForRenewalList = @()
 
     foreach ($appRegistration in $appRegistrationList)
     {
@@ -104,11 +100,17 @@ function GetAppRegistrationListForRenewal
                     $timeDifferenceInDays = $timeDifference.Days
 
                     if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifferenceInDays -le 30)
-                    {
-                        $appRegistration.CredentialKeyId = $certificate.keyId
-                        $appRegistration.DaysRemaining = $timeDifferenceInDays
+                    {   
+                        $appRegistrationForRenewal = New-Object -Type PSObject -Property @{
+                            'AppRegistrationId'   = $appRegistration.AppRegistrationId
+                            'AppRegistrationName' = $appRegistration.AppRegistrationName
+                            'KeyVault' = $appRegistration.KeyVault
+                            'KeyVaultClientId' = $appRegistration.KeyVaultClientId
+                            'CredentialKeyId' = $certificate.keyId
+                            'DaysRemaining' = $timeDifferenceInDays
+                        }
 
-                        $appRegistrationListForRenewal += $appRegistration
+                        $appRegistrationForRenewalList += $appRegistrationForRenewal
                     }
                 }
             }
@@ -117,10 +119,10 @@ function GetAppRegistrationListForRenewal
         catch {}
     }
 
-    return $appRegistrationListForRenewal
+    return $appRegistrationForRenewalList
 }
 
-function GetAppRegistrationListFromKeyVaults
+function GetAppRegistrationList
 {
     $appRegistrationList = @()
   
@@ -148,11 +150,8 @@ function GetAppRegistrationListFromKeyVaults
                         $appRegistration = New-Object -Type PSObject -Property @{
                             'AppRegistrationId'   = $AADApplication.appId
                             'AppRegistrationName' = $AADApplication.displayName
-                            'KeyVault'   = $keyVaultName
+                            'KeyVault' = $keyVaultName
                             'KeyVaultClientId' = $keyVaultClientIdName
-                            'KeyVaultClientSecret' = ""
-                            'CredentialKeyId' = ""
-                            'DaysRemaining' = 0
                         }
 
                         $appRegistrationList += $appRegistration
@@ -171,13 +170,13 @@ try
 {
     az account set --subscription $subscription
     
-    $appRegistrationList = GetAppRegistrationListFromKeyVaults
+    $appRegistrationList = GetAppRegistrationList
 
-    $appRegistrationListForRenewal = GetAppRegistrationListForRenewal $appRegistrationList
+    $appRegistrationForRenewalList = GetAppRegistrationListForRenewal $appRegistrationList
 
     if($true -eq $shouldUpdate)
     {
-        AddOrRenewAppRegistrationCredentials $appRegistrationCredentials
+        AddOrRenewAppRegistrationCredentials $appRegistrationForRenewalList
     }
 }
 
