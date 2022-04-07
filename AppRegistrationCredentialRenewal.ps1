@@ -61,6 +61,24 @@ function UploadCertificateToKeyVault
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
+function DisplayAppRegistrationCredentialsForRenewal
+{
+    param(
+        
+    )
+
+    if ($appRegistrationForRenewalList.Count -ne 0)
+    {
+        Write-Host "App Registration Credentials for Renewal (expiring within the next 30 days):"
+        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationName,KeyVault,CredentialKeyId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
+    }
+
+    else
+    {
+        Write-Host "There are no App Registration Credentials expiring within the next 30 days."
+    }
+}
+
 function AddOrRenewAppRegistrationCredentials
 {
     param(
@@ -175,16 +193,7 @@ try
 
     $appRegistrationForRenewalList = GetAppRegistrationListForRenewal $appRegistrationList
 
-    if ($appRegistrationList.Count -ne 0)
-    {
-        Write-Host "App Registration Credentials for Renewal (expiring within the next 30 days):"
-        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationName,KeyVault,CredentialKeyId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
-    }
-
-    else
-    {
-        Write-Host "There are no App Registration Credentials expiring within the next 30 days."
-    }
+    DisplayAppRegistrationCredentialsForRenewal $appRegistrationForRenewalList
 
     if($true -eq $shouldUpdate)
     {
