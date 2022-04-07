@@ -94,16 +94,14 @@ try
     
         # App Roles
         az ad app update --id $appId --app-roles `@AppRoles.json
+
+        Write-Host "$name App Registration has been created successfully."
     }
     
     else
     {
-        Write-Host "App registration with a name of '$name' already exists"
-        exit 1
+        Write-Host "App Registration '$name' already exists"
     }
 }
 
-catch
-{
-    exit 1
-}
+catch {}
