@@ -64,7 +64,7 @@ function UploadCertificateToKeyVault
 function DisplayAppRegistrationCredentialsForRenewal
 {
     param(
-        
+        [object[]] $appRegistrationForRenewalList
     )
 
     if ($appRegistrationForRenewalList.Count -ne 0)
