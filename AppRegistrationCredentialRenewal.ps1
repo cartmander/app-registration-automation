@@ -45,11 +45,11 @@ function UploadCertificateToKeyVault
 {
     param(
         [object] $certificate,
-        [object] $appRegistration,
+        [object] $appRegistrationCredential,
         [int] $duration
     )
     
-    $keyVaultClientSecret = SetClientSecretName $appRegistration.KeyVaultClientId
+    $keyVaultClientSecret = SetClientSecretName $appRegistrationCredential.KeyVaultClientId
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -57,23 +57,23 @@ function UploadCertificateToKeyVault
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistration.KeyVault --value $certificate.password | ConvertFrom-Json    
+    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationCredential.KeyVault --value $certificate.password | ConvertFrom-Json    
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
 function AddOrRenewAppRegistrationCredentials
 {
     param(
-        [object[]] $appRegistrationList
+        [object[]] $appRegistrationCredentialList
     )
 
-    foreach ($appRegistration in $appRegistrationList)
+    foreach ($appRegistrationCredential in $appRegistrationCredentialList)
     {
         $duration = GetClientSecretDuration
 
-        $certificate = az ad app credential reset --id $appRegistration.AppRegistrationId --years $duration | ConvertFrom-Json
-
-        UploadCertificateToKeyVault $certificate $appRegistration $duration
+        $newCredential = az ad app credential reset --id $appRegistrationCredential.AppRegistrationId --years $duration | ConvertFrom-Json
+        
+        UploadCertificateToKeyVault $newCredential $appRegistrationCredential $duration
     }
 }
 
@@ -174,6 +174,17 @@ try
     $appRegistrationList = GetAppRegistrationList
 
     $appRegistrationForRenewalList = GetAppRegistrationListForRenewal $appRegistrationList
+
+    if ($appRegistrationList.Count -ne 0)
+    {
+        Write-Host "App Registration Credentials for Renewal (expiring within the next 30 days):"
+        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationName,KeyVault,CredentialKeyId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
+    }
+
+    else
+    {
+        Write-Host "There are no App Registration Credentials expiring within the next 30 days."
+    }
 
     if($true -eq $shouldUpdate)
     {
