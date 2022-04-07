@@ -3,10 +3,13 @@ param(
     [string] $name,
 
     [Parameter(Mandatory=$true)]
+    [string] $subscription,
+
+    [Parameter(Mandatory=$true)]
     [string[]] $owners,
 
     [Parameter(Mandatory=$true)]
-    [string] $subscription,
+    [string] $keyVault,
 
     [string[]] $replyUrls
 )
@@ -68,13 +71,61 @@ function AddReplyUrls
     }
 }
 
+function UploadCertificateToKeyVault
+{
+    param(
+        [object] $certificate,
+        [string] $appId
+    )
+    
+    $clientId = $name + "-AzureAD--ClientId"
+    $clientSecret = $name + "-AzureAD--ClientSecret"
+
+    $createdDate = (Get-Date).ToUniversalTime()
+    $expiryDate = $createdDate.AddYears(1).ToUniversalTime()
+
+    $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
+    $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
+
+    #AzureAD--ClientId Secret
+    az keyvault secret set --name $clientId --vault-name $keyVault --value $appId
+
+    #AzureAD--ClientSecret Secret
+    $secret = az keyvault secret set --name $clientSecret --vault-name $keyVault --value $certificate.password | ConvertFrom-Json    
+    az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
+}
+
+function AddCertificate
+{
+    param(
+        [string] $appId
+    )
+
+    $certificate = az ad app credential reset --id $appId --years 1 | ConvertFrom-Json
+
+    UploadCertificateToKeyVault $certificate $appId
+}
+
 try
 {
     az account set --subscription $subscription
 
     $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
-    
-    if ($null -eq $getAADApplication)
+    $getKeyVault = az keyvault show --name $keyVault | ConvertFrom-Json
+
+    if ($null -eq $getKeyVault)
+    {
+        Write-Host "Key Vault '$getKeyVault' does not exist"
+        exit 1
+    }
+
+    if ($null -ne $getAADApplication)
+    {
+        Write-Host "App Registration '$name' already exists"
+        exit 1
+    }
+
+    else
     {
         $createAADApplication = az ad app create --display-name $name | ConvertFrom-Json
     
@@ -95,12 +146,10 @@ try
         # App Roles
         az ad app update --id $appId --app-roles `@AppRoles.json
 
+        # Certificate
+        AddCertificate $appId
+
         Write-Host "$name App Registration has been created successfully."
-    }
-    
-    else
-    {
-        Write-Host "App Registration '$name' already exists"
     }
 }
 
