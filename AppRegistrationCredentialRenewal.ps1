@@ -1,8 +1,10 @@
 param(
     [Parameter(Mandatory=$true)]
     [string] $subscription,
+
     [Parameter(Mandatory=$true)]
     [bool] $shouldUpdate,
+
     [int] $duration
 )
 
@@ -26,14 +28,14 @@ function SetClientSecretName
     {
         $suffix = "AzureAd--ClientId"
         $prefix = $keyVaultClientId.Substring(0, $keyVaultClientId.IndexOf($suffix))
-        $keyVaultClientSecret = "$prefix-AzureAd--ClientSecret"
+        $keyVaultClientSecret = $prefix + "AzureAd--ClientSecret"
     }
 
     elseif ($keyVaultClientId.Contains("AzureAD--ClientId"))
     {
         $suffix = "AzureAD--ClientId"
         $prefix = $keyVaultClientId.Substring(0, $keyVaultClientId.IndexOf($suffix))
-        $keyVaultClientSecret = "$prefix-AzureAD--ClientSecret"
+        $keyVaultClientSecret = $prefix + "AzureAD--ClientSecret"
     }
 
     return $keyVaultClientSecret
@@ -43,10 +45,11 @@ function UploadCertificateToKeyVault
 {
     param(
         [object] $certificate,
-        [object] $appRegistrationCredential
+        [object] $appRegistration,
+        [int] $duration
     )
     
-    $keyVaultClientSecret = SetClientSecretName $appRegistrationCredential.KeyVaultClientId
+    $keyVaultClientSecret = SetClientSecretName $appRegistration.KeyVaultClientId
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -54,23 +57,23 @@ function UploadCertificateToKeyVault
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationCredential.KeyVault --value $certificate.password | ConvertFrom-Json    
+    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistration.KeyVault --value $certificate.password | ConvertFrom-Json    
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
 function AddOrRenewAppRegistrationCredentials
 {
     param(
-        [object[]] $appRegistrationCredentialList
+        [object[]] $appRegistrationList
     )
 
-    foreach ($appRegistrationCredential in $appRegistrationCredentialList)
+    foreach ($appRegistration in $appRegistrationList)
     {
         $duration = GetClientSecretDuration
 
-        $certificate = az ad app credential reset --id $appRegistrationCredential.AppRegistrationId --years $duration | ConvertFrom-Json
-        
-        UploadCertificateToKeyVault $certificate $appRegistrationCredential
+        $certificate = az ad app credential reset --id $appRegistration.AppRegistrationId --years $duration | ConvertFrom-Json
+
+        UploadCertificateToKeyVault $certificate $appRegistration $duration
     }
 }
 
