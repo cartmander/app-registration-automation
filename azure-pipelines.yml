@@ -6,30 +6,24 @@ name: Deploy App Registration Automation
 variables:
   - name: azureResourceManagerConnection
     value: ICO-DEV-SERVICE-CONN
-  - name: name
-    value: IndigoMonitorApp-Automation
-  - name: owners
-    value: MICHA6273_adm@towerswatson.com, KEVIN3349_ADM@willistowerswatson.com
+  - name: subscription
+    value: WTW-IRRNDG-DEV
+  - name: shouldUpdate
+    value: $false
+  - name: duration
+    value: 100
 
 pool:
-  vmImage: 'windows-latest'
+  name: WIN-DEV-POOL
   
 steps:
-- task: PowerShell@2
-  inputs:
-    targetType: 'inline'
-    script: |
-      Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force
-      Install-Module -Name AzureRM -Scope CurrentUser -AllowClobber -Force
-      Uninstall-AzureRm
-      Install-Module -Name AzureAD -Scope CurrentUser -AllowClobber -Force
-
 - task: AzurePowerShell@5
   inputs:
     azureSubscription: $(azureResourceManagerConnection)
     ScriptType: 'FilePath'
-    ScriptPath: './AppRegistration.ps1'
+    ScriptPath: './AppRegistrationClientSecretRenewal.ps1'
     ScriptArguments: 
-      -name $(name)`
-      -owners $(owners)
+      -subscription $(name)`
+      -shouldUpdate $(owners)`
+      -duration $(duration)
     azurePowerShellVersion: 'LatestVersion'
