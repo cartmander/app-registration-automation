@@ -9,7 +9,7 @@ variables:
   - name: subscription
     value: WTW-IRRNDG-DEV
   - name: shouldUpdate
-    value: false
+    value: $false
   - name: duration
     value: 100
 
