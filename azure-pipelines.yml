@@ -24,7 +24,6 @@ steps:
     ScriptPath: './AppRegistrationClientSecretRenewal.ps1'
     ScriptArguments: 
       -subscription $(subscription) ` 
-      -shouldUpdate $(shouldUpdate)  `
+      -shouldUpdate $(shouldUpdate) `
       -duration $(duration)
     azurePowerShellVersion: 'LatestVersion'
-    pwsh: true
