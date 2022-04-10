@@ -45,11 +45,11 @@ function UploadCertificateToKeyVault
 {
     param(
         [object] $certificate,
-        [object] $appRegistrationCredential,
+        [object] $appRegistrationCertificate,
         [int] $duration
     )
     
-    $keyVaultClientSecret = SetClientSecretName $appRegistrationCredential.KeyVaultClientId
+    $keyVaultClientSecret = SetClientSecretName $appRegistrationCertificate.KeyVaultClientId
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -57,11 +57,11 @@ function UploadCertificateToKeyVault
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationCredential.KeyVault --value $certificate.password | ConvertFrom-Json    
+    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationCertificate.KeyVault --value $certificate.password | ConvertFrom-Json    
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
-function DisplayAppRegistrationCredentialsForRenewal
+function DisplayAppRegistrationCertificatesForRenewal
 {
     param(
         [object[]] $appRegistrationForRenewalList
@@ -69,29 +69,29 @@ function DisplayAppRegistrationCredentialsForRenewal
 
     if ($appRegistrationForRenewalList.Count -ne 0)
     {
-        Write-Host "App Registration Credentials for Renewal (expiring within the next 30 days):"
-        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationName,KeyVault,CredentialKeyId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
+        Write-Host "App Registration Certificates for Renewal (expiring within the next 30 days):"
+        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationId,AppRegistrationName,KeyVault,CertificateKeyId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
     }
 
     else
     {
-        Write-Host "There are no App Registration Credentials expiring within the next 30 days."
+        Write-Host "There are no App Registration Certificates expiring within the next 30 days."
     }
 }
 
-function AddOrRenewAppRegistrationCredentials
+function AddOrRenewAppRegistrationCertificates
 {
     param(
-        [object[]] $appRegistrationCredentialList
+        [object[]] $appRegistrationCertificateList
     )
 
-    foreach ($appRegistrationCredential in $appRegistrationCredentialList)
+    foreach ($appRegistrationCertificate in $appRegistrationCertificateList)
     {
         $duration = GetClientSecretDuration
 
-        $newCredential = az ad app credential reset --id $appRegistrationCredential.AppRegistrationId --years $duration | ConvertFrom-Json
+        $newCertificate = az ad app credential reset --id $appRegistrationCertificate.AppRegistrationId --years $duration | ConvertFrom-Json
         
-        UploadCertificateToKeyVault $newCredential $appRegistrationCredential $duration
+        UploadCertificateToKeyVault $newCertificate $appRegistrationCertificate $duration
     }
 }
 
@@ -126,7 +126,7 @@ function GetAppRegistrationListForRenewal
                             'AppRegistrationName' = $appRegistration.AppRegistrationName
                             'KeyVault' = $appRegistration.KeyVault
                             'KeyVaultClientId' = $appRegistration.KeyVaultClientId
-                            'CredentialKeyId' = $certificate.keyId
+                            'CertificateKeyId' = $certificate.keyId
                             'DaysRemaining' = $timeDifferenceInDays
                         }
 
@@ -193,11 +193,11 @@ try
 
     $appRegistrationForRenewalList = GetAppRegistrationListForRenewal $appRegistrationList
 
-    DisplayAppRegistrationCredentialsForRenewal $appRegistrationForRenewalList
+    DisplayAppRegistrationCertificatesForRenewal $appRegistrationForRenewalList
 
     if($true -eq $shouldUpdate)
     {
-        AddOrRenewAppRegistrationCredentials $appRegistrationForRenewalList
+        AddOrRenewAppRegistrationCertificates $appRegistrationForRenewalList
     }
 }
 
