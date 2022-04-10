@@ -8,8 +8,6 @@ variables:
     value: ICO-DEV-SERVICE-CONN
   - name: subscription
     value: WTW-IRRNDG-DEV
-  - name: shouldUpdate
-    value: false
   - name: duration
     value: 100
 
@@ -24,6 +22,6 @@ steps:
     ScriptPath: './AppRegistrationClientSecretRenewal.ps1'
     ScriptArguments: 
       -subscription $(subscription)`
-      -shouldUpdate $(shouldUpdate)`
+      -shouldUpdate $false`
       -duration $(duration)
     azurePowerShellVersion: 'LatestVersion'
