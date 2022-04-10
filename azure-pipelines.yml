@@ -27,3 +27,4 @@ steps:
       -shouldUpdate $(shouldUpdate)  `
       -duration $(duration)
     azurePowerShellVersion: 'LatestVersion'
+    pwsh: true
