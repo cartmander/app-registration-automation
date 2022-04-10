@@ -41,15 +41,15 @@ function SetClientSecretName
     return $keyVaultClientSecret
 }
 
-function UploadCertificateToKeyVault
+function UploadClientSecretToKeyVault
 {
     param(
-        [object] $certificate,
-        [object] $appRegistrationCertificate,
+        [object] $clientSecret,
+        [object] $appRegistrationClientSecret,
         [int] $duration
     )
     
-    $keyVaultClientSecret = SetClientSecretName $appRegistrationCertificate.KeyVaultClientId
+    $keyVaultClientSecret = SetClientSecretName $appRegistrationClientSecret.KeyVaultClientId
 
     $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
@@ -57,11 +57,11 @@ function UploadCertificateToKeyVault
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationCertificate.KeyVault --value $certificate.password | ConvertFrom-Json    
+    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationClientSecret.KeyVault --value $clientSecret.password | ConvertFrom-Json    
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
-function DisplayAppRegistrationCertificatesForRenewal
+function DisplayAppRegistrationClientSecretsForRenewal
 {
     param(
         [object[]] $appRegistrationForRenewalList
@@ -69,29 +69,29 @@ function DisplayAppRegistrationCertificatesForRenewal
 
     if ($appRegistrationForRenewalList.Count -ne 0)
     {
-        Write-Host "App Registration Certificates for Renewal (expiring within the next 30 days):"
-        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationId,AppRegistrationName,KeyVault,CertificateKeyId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
+        Write-Host "App Registration Client Secrets for Renewal (expiring within the next 30 days):"
+        $appRegistrationForRenewalList | Select-Object -Property AppRegistrationId,AppRegistrationName,KeyVault,ClientSecretId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
     }
 
     else
     {
-        Write-Host "There are no App Registration Certificates expiring within the next 30 days."
+        Write-Host "There are no App Registration Client Secrets expiring within the next 30 days."
     }
 }
 
-function AddOrRenewAppRegistrationCertificates
+function AddOrRenewAppRegistrationClientSecrets
 {
     param(
-        [object[]] $appRegistrationCertificateList
+        [object[]] $appRegistrationClientSecretList
     )
 
-    foreach ($appRegistrationCertificate in $appRegistrationCertificateList)
+    foreach ($appRegistrationClientSecret in $appRegistrationClientSecretList)
     {
         $duration = GetClientSecretDuration
 
-        $newCertificate = az ad app credential reset --id $appRegistrationCertificate.AppRegistrationId --years $duration | ConvertFrom-Json
+        $newClientSecret = az ad app credential reset --id $appRegistrationClientSecret.AppRegistrationId --years $duration | ConvertFrom-Json
         
-        UploadCertificateToKeyVault $newCertificate $appRegistrationCertificate $duration
+        UploadClientSecretToKeyVault $newClientSecret $appRegistrationClientSecret $duration
     }
 }
 
@@ -107,26 +107,26 @@ function GetAppRegistrationListForRenewal
     {
         try
         {            
-            $certificateList = az ad app credential list --id $appRegistration.AppRegistrationId | ConvertFrom-Json
+            $clientSecretList = az ad app credential list --id $appRegistration.AppRegistrationId | ConvertFrom-Json
 
-            if(![string]::IsNullOrEmpty($certificateList) -or $null -ne $certificateList)
+            if(![string]::IsNullOrEmpty($clientSecretList) -or $null -ne $clientSecretList)
             {
-                foreach($certificate in $certificateList)
+                foreach($clientSecret in $clientSecretList)
                 {
                     $currentDate = Get-Date
-                    $certificateEndDate = $certificate.endDate
+                    $clientSecretEndDate = $clientSecret.endDate
 
-                    $timeDifference = New-TimeSpan -Start $currentDate -End $certificateEndDate
+                    $timeDifference = New-TimeSpan -Start $currentDate -End $clientSecretEndDate
                     $timeDifferenceInDays = $timeDifference.Days
 
-                    if(![string]::IsNullOrEmpty($certificateEndDate) -and $timeDifferenceInDays -le 30)
+                    if(![string]::IsNullOrEmpty($clientSecretEndDate) -and $timeDifferenceInDays -le 30)
                     {   
                         $appRegistrationForRenewal = New-Object -Type PSObject -Property @{
                             'AppRegistrationId'   = $appRegistration.AppRegistrationId
                             'AppRegistrationName' = $appRegistration.AppRegistrationName
                             'KeyVault' = $appRegistration.KeyVault
                             'KeyVaultClientId' = $appRegistration.KeyVaultClientId
-                            'CertificateKeyId' = $certificate.keyId
+                            'ClientSecretId' = $clientSecret.keyId
                             'DaysRemaining' = $timeDifferenceInDays
                         }
 
@@ -193,11 +193,11 @@ try
 
     $appRegistrationForRenewalList = GetAppRegistrationListForRenewal $appRegistrationList
 
-    DisplayAppRegistrationCertificatesForRenewal $appRegistrationForRenewalList
+    DisplayAppRegistrationClientSecretsForRenewal $appRegistrationForRenewalList
 
     if($true -eq $shouldUpdate)
     {
-        AddOrRenewAppRegistrationCertificates $appRegistrationForRenewalList
+        AddOrRenewAppRegistrationClientSecrets $appRegistrationForRenewalList
     }
 }
 
