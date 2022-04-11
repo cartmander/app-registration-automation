@@ -89,7 +89,7 @@ function AddOrRenewAppRegistrationClientSecrets
     {
         $duration = GetClientSecretDuration
 
-        $newClientSecret = az ad app credential reset --id $appRegistrationClientSecret.AppRegistrationId --years $duration --credential-description $appRegistrationClientSecret.KeyVault  | ConvertFrom-Json
+        $newClientSecret = az ad app credential reset --id $appRegistrationClientSecret.AppRegistrationId --years $duration | ConvertFrom-Json
         
         UploadClientSecretToKeyVault $newClientSecret $appRegistrationClientSecret $duration
     }
