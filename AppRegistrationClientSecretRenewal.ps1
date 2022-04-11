@@ -57,7 +57,7 @@ function UploadClientSecretToKeyVault
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationClientSecret.KeyVault --value $clientSecret.password | ConvertFrom-Json    
+    $secret = az keyvault secret set --name $keyVaultClientSecret --vault-name $appRegistrationClientSecret.KeyVault --value $clientSecret.password --description $appRegistrationClientSecret.KeyVault | ConvertFrom-Json    
     az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
 }
 
