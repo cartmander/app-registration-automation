@@ -18,14 +18,18 @@ param(
 function AddReplyUrls
 {
     param(
-        [string] $appId
+        [string] $appId,
+        [object] $AADApplication
     )
 
-    if ($replyUrls.Count -gt 0)
+    if ($replyUrls.Count -gt 0 -and $null -ne $replyUrls)
     {
         if ($true -eq $resetProperties)
         {
-            az ad app update --id $appId --remove requiredResourceAccess
+            if ($AADApplication.replyUrls.Count -gt 0)
+            {
+                az ad app update --id $appId --remove replyUrls
+            }
         }
 
         foreach ($replyUrl in $replyUrls)
@@ -38,18 +42,22 @@ function AddReplyUrls
 function AddApiPermissions
 {
     param(
-        [string] $appId
+        [string] $appId,
+        [object] $AADApplication
     )
 
     #For Api Permission Scoping, please check: https://docs.microsoft.com/en-us/graph/permissions-reference
 
     $api = "00000003-0000-0000-c000-000000000000"
 
-    if ($apiPermissions.Count -gt 0)
+    if ($apiPermissions.Count -gt 0 -and $null -ne $apiPermissions)
     {
         if ($true -eq $resetProperties)
         {
-            az ad app update --id $appId --remove replyUrls
+            if ($AADApplication.requiredResourceAccess.Count -gt 0)
+            {
+                az ad app update --id $appId --remove requiredResourceAccess
+            }
         }
 
         foreach ($apiPermission in $apiPermissions)
@@ -65,14 +73,17 @@ function AddOwners
         [string] $appId
     )
 
-    foreach ($owner in $owners)
+    if ($owners.Count -gt 0 -and $null -ne $owners)
     {
-        $appOwner = az ad user show --id $owner | ConvertFrom-Json
-
-        if($null -ne $appOwner)
+        foreach ($owner in $owners)
         {
-            $ownerObjectId = $appOwner.ObjectId
-            az ad app owner add --id $appId --owner-object-id $ownerObjectId
+            $appOwner = az ad user show --id $owner | ConvertFrom-Json
+
+            if($null -ne $appOwner)
+            {
+                $ownerObjectId = $appOwner.ObjectId
+                az ad app owner add --id $appId --owner-object-id $ownerObjectId
+            }
         }
     }
 }
@@ -81,21 +92,21 @@ try
 {
     az account set --subscription $subscription
 
-    $getAADApplication = az ad app show --id $appId
+    $getAADApplication = az ad app show --id $appId | ConvertFrom-Json
+
+    $appId = $getAADApplication.appId
+    $displayName = $getAADApplication.displayName
 
     if ($null -ne $getAADApplication)
-    {
-        $appId = $getAADApplication.appId
-        $displayName = $getAADApplication.displayName
-    
+    {    
         #Owners
         AddOwners $appId
     
         #API Permissions
-        AddApiPermissions $appId
+        AddApiPermissions $appId $getAADApplication
     
         # Authentication
-        AddReplyUrls $appId
+        AddReplyUrls $appId $getAADApplication
 
         Write-Host "App Registration '$displayName' has been updated successfully."
     }
