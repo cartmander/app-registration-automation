@@ -53,6 +53,10 @@ function AddCertificate
 
 function AddReplyUrls
 {
+    param(
+        [string] $appId
+    )
+
     if ($replyUrls.Count -gt 0)
     {
         foreach ($replyUrl in $replyUrls)
@@ -154,7 +158,7 @@ try
         UpdatePermissionsAndApis
     
         # Authentication
-        AddReplyUrls
+        AddReplyUrls $appId
     
         # App Roles
         az ad app update --id $appId --app-roles `@AppRoles.json

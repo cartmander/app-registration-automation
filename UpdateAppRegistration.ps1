@@ -5,6 +5,9 @@ param(
     [Parameter(Mandatory=$true)]
     [string] $appId,
 
+    [Parameter(Mandatory=$true)]
+    [bool] $resetProperties,
+
     [string[]] $owners,
 
     [string[]] $apiPermissions,
@@ -14,8 +17,17 @@ param(
 
 function AddReplyUrls
 {
+    param(
+        [string] $appId
+    )
+
     if ($replyUrls.Count -gt 0)
     {
+        if ($true -eq $resetProperties)
+        {
+            az ad app update --id $appId --remove requiredResourceAccess
+        }
+
         foreach ($replyUrl in $replyUrls)
         {
             az ad app update --id $appId --add replyUrls $replyUrl
@@ -35,6 +47,11 @@ function AddApiPermissions
 
     if ($apiPermissions.Count -gt 0)
     {
+        if ($true -eq $resetProperties)
+        {
+            az ad app update --id $appId --remove replyUrls
+        }
+
         foreach ($apiPermission in $apiPermissions)
         {
             az ad app permission add --id $appId --api $api --api-permissions $apiPermission
@@ -77,7 +94,7 @@ try
         AddApiPermissions $appId
     
         # Authentication
-        AddReplyUrls
+        AddReplyUrls $appId
 
         Write-Host "$name App Registration has been updated successfully."
     }
