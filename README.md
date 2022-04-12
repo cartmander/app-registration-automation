@@ -21,10 +21,10 @@ CreateAppRegistration.ps1
 UpdateAppRegistration.ps1
 - subscription - (string) - Azure subscription
 - appId - (string) App ID of App registration
-- resetProperties - (bool) Clears all provided optional parameters before the script repopulate them (owners, apiPermissions, replyUrls)
-- owners - (array of strings) (Optional) - List of owners to append (resetProperties: false) or replace (resetProperties: true)
-- apiPermissions - (array of strings) (Optional) - List of Api Permissions to append (resetProperties: false) or replace (resetProperties: true) (please check: https://docs.microsoft.com/en-us/graph/permissions-reference)
-- replyUrls - (array of strings) (Optional) - List of Redirect URIs to append (resetProperties: false) or replace (resetProperties: true)
+- resetProperties - (bool) Clears all resources related to the provided optional parameters before the script repopulates them (owners, apiPermissions, replyUrls)
+- owners - (array of strings) (Optional) - List of owners to append or replace (depends on the value of resetProperties)
+- apiPermissions - (array of strings) (Optional) - List of Api Permissions to append or replace (depends on the value of resetProperties) (please check: https://docs.microsoft.com/en-us/graph/permissions-reference)
+- replyUrls - (array of strings) (Optional) - List of Redirect URIs to append or replace (depends on the value of resetProperties)
 
 RenewAppRegistrationClientSecret.ps1
 - subscription - (string) - Azure subscription
