@@ -146,7 +146,7 @@ try
     {
         $createAADApplication = az ad app create --display-name $name | ConvertFrom-Json
     
-        $appId = $createAADApplication.AppId
+        $appId = $createAADApplication.appId
     
         #Owners
         AddOwners $appId

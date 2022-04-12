@@ -85,7 +85,8 @@ try
 
     if ($null -ne $getAADApplication)
     {
-        $appId = $getAADApplication.AppId
+        $appId = $getAADApplication.appId
+        $displayName = $getAADApplication.displayName
     
         #Owners
         AddOwners $appId
@@ -96,7 +97,7 @@ try
         # Authentication
         AddReplyUrls $appId
 
-        Write-Host "$name App Registration has been updated successfully."
+        Write-Host "App Registration '$displayName' has been updated successfully."
     }
 
     else
