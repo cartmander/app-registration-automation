@@ -11,6 +11,8 @@ param(
     [Parameter(Mandatory=$true)]
     [string] $keyVault,
 
+    [string[]] $apiPermissions,
+
     [string[]] $replyUrls
 )
 
@@ -38,11 +40,24 @@ function AddApiPermissions
         [string] $appId
     )
 
+    #For Api Permission Scoping, please check: https://docs.microsoft.com/en-us/graph/permissions-reference
+
     $api = "00000003-0000-0000-c000-000000000000"
 
-    az ad app permission add --id $appId --api $api --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope
-    az ad app permission add --id $appId --api $api --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope
-    az ad app permission add --id $appId --api $api --api-permissions b340eb25-3456-403f-be2f-af7a0d370277=Scope
+    if ($apiPermissions.Count -gt 0)
+    {
+        foreach ($apiPermission in $apiPermissions)
+        {
+            az ad app permission add --id $appId --api $api --api-permissions $apiPermission
+        }
+    }
+
+    else
+    {
+        az ad app permission add --id $appId --api $api --api-permissions 14dad69e-099b-42c9-810b-d002981feec1=Scope
+        az ad app permission add --id $appId --api $api --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope
+        az ad app permission add --id $appId --api $api --api-permissions b340eb25-3456-403f-be2f-af7a0d370277=Scope
+    }
 }
 
 function UpdatePermissionsAndApis
