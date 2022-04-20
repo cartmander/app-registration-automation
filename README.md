@@ -21,7 +21,7 @@ CreateAppRegistration.ps1
 UpdateAppRegistration.ps1
 - subscription - (string) - Azure subscription
 - appId - (string) App ID of App registration
-- resetProperties - (bool) Clears all resources related to the provided optional parameters before the script repopulates them (can only reset apiPermissions and replyUrls. Existing owners can only be appended but cannot be removed or replaced)
+- resetProperties - (bool) Clears all resources related to the provided optional parameters before the script repopulates them. This can only reset apiPermissions and replyUrls properties. Existing owners can only be appended but cannot be removed or replaced)
 - owners - (array of strings) (Optional) - List of owners to append or replace (depends on the value of resetProperties)
 - apiPermissions - (array of strings) (Optional) - List of API Permissions to append or replace (depends on the value of resetProperties) (please check: https://docs.microsoft.com/en-us/graph/permissions-reference)
 - replyUrls - (array of strings) (Optional) - List of Redirect URIs to append or replace (depends on the value of resetProperties)
