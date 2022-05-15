@@ -4,7 +4,7 @@ trigger:
 name: Deploy App Registration Automation
 
 variables:
-  azureResourceManagerConnection: ICO-PROD-SERVICE-CONN
+  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
   subscription: WTW-IRRNDG-DEV
   shouldUpdate: $false
   duration: 10
@@ -13,9 +13,10 @@ pool:
   name: 'WIN-DEV-POOL'
   
 steps:
-- task: PowerShell@2
-  continueOnError: true
+- task: AzureCLI@2
+  displayName: 'Deploy App Registration Automation'
   inputs:
-    targetType: 'filePath'
-    filePath: 'RenewAppRegistrationClientSecret.ps1'
-    arguments: -subscription $(subscription) -shouldUpdate $(shouldUpdate) -duration $(duration)
+    azureSubscription: $(azureResourceManagerConnection)
+    scriptType: ps
+    scriptPath: 'RenewAppRegistrationClientSecret.ps1'
+    arguments: '-subscription $(subscription) -shouldUpdate $(shouldUpdate) -duration $(duration)'
