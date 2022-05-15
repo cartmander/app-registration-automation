@@ -4,21 +4,18 @@ trigger:
 name: Deploy App Registration Automation
 
 variables:
-  - name: azureResourceManagerConnection
-    value: ICO-DEV-SERVICE-CONN
-  - name: subscription
-    value: WTW-IRRNDG-DEV
-  - name: shouldUpdate
-    value: $false
-  - name: duration
-    value: 100
+  azureResourceManagerConnection: ICO-PROD-SERVICE-CONN
+  subscription: IRRNDG-PROD-EM20-RGRP
+  shouldUpdate: $false
 
 pool:
-  name: WIN-DEV-POOL
+  name: 'WIN-DEV-POOL'
   
 steps:
-- task: PowerShell@2
+- task: AzureCLI@2
   inputs:
-    targetType: 'inline'
-    script: |
-      Get-Host | Select-Object Version
+    azureSubscription: $(azureResourceManagerConnection)
+    scriptType: powershell
+    scriptLocation: inlineScript
+    inlineScript: |
+      az deployment group create --resource-group $(azureResourceGroup) -f $(templateFile) --parameters @parameters.json
