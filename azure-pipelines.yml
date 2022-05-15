@@ -10,7 +10,7 @@ variables:
   duration: 10
 
 pool:
-  name: 'WIN-DEV-POOL'
+  vmImage: 'windows-latest'
   
 steps:
 - task: AzureCLI@2
