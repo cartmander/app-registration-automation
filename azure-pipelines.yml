@@ -14,7 +14,8 @@ pool:
   
 steps:
 - task: PowerShell@2
+  continueOnError: true
   inputs:
     targetType: 'filePath'
-    filePath: '.\RenewAppRegistrationClientSecret.ps1'
+    filePath: 'RenewAppRegistrationClientSecret.ps1'
     arguments: -subscription $(subscription) -shouldUpdate $(shouldUpdate) -duration $(duration)
