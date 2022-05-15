@@ -45,7 +45,7 @@ pool:
 steps:
 - ${{ if contains(parameters.shouldUpdate, 'Display Expiring Client Secrets') }}:
   - task: AzureCLI@2
-    displayName: 'List App Registrations with less than 30 days of Client Secret validity'
+    displayName: 'Display expiring client secrets with less than 30 days of validity'
     inputs:
       azureSubscription: $(azureResourceManagerConnection)
       scriptType: ps
@@ -54,7 +54,7 @@ steps:
 
 - ${{ if contains(parameters.shouldUpdate, 'Display and Renew Expiring Client Secrets') }}:
   - task: AzureCLI@2
-    displayName: 'List App Registrations with less than 30 days of Client Secret validity'
+    displayName: 'Display and renew expiring client secrets with less than 30 days of validity'
     inputs:
       azureSubscription: $(azureResourceManagerConnection)
       scriptType: ps
