@@ -51,7 +51,7 @@ variables:
 
 steps:
   - task: AzureCLI@2
-    displayName: 'Display expiring client secrets with less than 30 days of validity'
+    displayName: 'Display expiring Client Secrets with less than 30 days of validity'
     inputs:
       azureSubscription: $(azureResourceManagerConnection)
       scriptType: ps
