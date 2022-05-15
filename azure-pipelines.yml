@@ -14,28 +14,49 @@ parameters:
     values:
       - WTW-IRRNDG-DEV
       - WTW-IRRNDG-PROD
+
   - name: shouldUpdate
-    displayName: 'Should App Registration Client Secrets renew?'
-    type: boolean
-    default: false
+    displayName: 'Action Needed'
+    type: string
+    default: Display Expiring Client Secrets
+    values:
+      - Display Expiring Client Secrets
+      - Display and Renew Expiring Client Secrets
+
   - name: duration
-    displayName: 'Client Secrets new expiration (in years) if App Registration Client Secrets should renew'
+    displayName: 'Client Secrets new validity (in years), if client secrets should be renewed'
     type: number
     default: 1
     values:
     - 1
     - 2
+    - 3
+    - 4
     - 5
+    - 6
+    - 7
+    - 8
+    - 9
     - 10
 
 pool:
   vmImage: 'windows-latest'
 
 steps:
-- task: AzureCLI@2
-  displayName: 'List App Registrations with less than 30 days of Client Secret validity'
-  inputs:
-    azureSubscription: $(azureResourceManagerConnection)
-    scriptType: ps
-    scriptPath: 'RenewAppRegistrationClientSecret.ps1'
-    arguments: '-subscription ${{ parameters.subscription }} -shouldUpdate ${{ parameters.shouldUpdate }} -duration ${{ parameters.duration }}'
+- ${{ if contains(parameters.shouldUpdate, 'Display Expiring Client Secrets') }}:
+  - task: AzureCLI@2
+    displayName: 'List App Registrations with less than 30 days of Client Secret validity'
+    inputs:
+      azureSubscription: $(azureResourceManagerConnection)
+      scriptType: ps
+      scriptPath: 'RenewAppRegistrationClientSecret.ps1'
+      arguments: '-subscription ${{ parameters.subscription }} -shouldUpdate $false -duration ${{ parameters.duration }}'
+
+- ${{ if contains(parameters.shouldUpdate, 'Display and Renew Expiring Client Secrets') }}:
+  - task: AzureCLI@2
+    displayName: 'List App Registrations with less than 30 days of Client Secret validity'
+    inputs:
+      azureSubscription: $(azureResourceManagerConnection)
+      scriptType: ps
+      scriptPath: 'RenewAppRegistrationClientSecret.ps1'
+      arguments: '-subscription ${{ parameters.subscription }} -shouldUpdate $true -duration ${{ parameters.duration }}'
