@@ -127,7 +127,7 @@ function GetAppRegistrationListForRenewal
                     $timeDifference = New-TimeSpan -Start $currentDate -End $clientSecretEndDate
                     $timeDifferenceInDays = $timeDifference.Days
 
-                    if(![string]::IsNullOrEmpty($clientSecretEndDate) -and $timeDifferenceInDays -le 30)
+                    if(![string]::IsNullOrEmpty($clientSecretEndDate) -and $timeDifferenceInDays -le 9000000)
                     {   
                         $appRegistrationForRenewal = New-Object -Type PSObject -Property @{
                             'AppRegistrationId'   = $appRegistration.AppRegistrationId
@@ -154,7 +154,7 @@ function GetAppRegistrationList
 {
     $appRegistrationList = @()
   
-    $keyVaults = az keyvault list | ConvertFrom-Json
+    $keyVaults = az keyvault list --query "[?contains(name, 'AUTOMATE-POC-EM20-KV')]" | ConvertFrom-Json
 
     foreach ($keyVault in $keyVaults)
     {
