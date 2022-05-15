@@ -3,8 +3,8 @@ trigger:
 
 name: Deploy App Registration Client Secret Renewal
 
-variables:
-  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
+pool:
+  vmImage: 'windows-latest'
 
 parameters:
   - name: subscription
@@ -39,24 +39,21 @@ parameters:
     - 9
     - 10
 
-pool:
-  vmImage: 'windows-latest'
+variables:
+  - name: azureResourceManagerConnection
+    value: ICO-DEV-SERVICE-CONN
+  - ${{ if contains(parameters.shouldUpdate, 'Display Expiring Client Secrets') }}:
+    - name: shouldUpdate
+      value: $false
+  - ${{ if contains(parameters.shouldUpdate, 'Display and Renew Expiring Client Secrets') }}:
+    - name: shouldUpdate
+      value: $true
 
 steps:
-- ${{ if contains(parameters.shouldUpdate, 'Display Expiring Client Secrets') }}:
   - task: AzureCLI@2
     displayName: 'Display expiring client secrets with less than 30 days of validity'
     inputs:
       azureSubscription: $(azureResourceManagerConnection)
       scriptType: ps
       scriptPath: 'RenewAppRegistrationClientSecret.ps1'
-      arguments: '-subscription ${{ parameters.subscription }} -shouldUpdate $false -duration ${{ parameters.duration }}'
-
-- ${{ if contains(parameters.shouldUpdate, 'Display and Renew Expiring Client Secrets') }}:
-  - task: AzureCLI@2
-    displayName: 'Display and renew expiring client secrets with less than 30 days of validity'
-    inputs:
-      azureSubscription: $(azureResourceManagerConnection)
-      scriptType: ps
-      scriptPath: 'RenewAppRegistrationClientSecret.ps1'
-      arguments: '-subscription ${{ parameters.subscription }} -shouldUpdate $true -duration ${{ parameters.duration }}'
+      arguments: '-subscription ${{ parameters.subscription }} -shouldUpdate $(shouldUpdate) -duration ${{ parameters.duration }}'
