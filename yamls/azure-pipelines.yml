@@ -18,16 +18,10 @@ parameters:
 
 stages:
   - ${{ if eq(parameters.appRegistrationAutomation, 'Create App Registration' ) }}:
-  - stage: Build
-    jobs:
-      - template: create-app-registration.yml
+    - template: create-app-registration.yml
     
   - ${{ if eq(parameters.appRegistrationAutomation, 'Update App Registration' ) }}:
-  - stage: Build
-    jobs:
-      - template: update-app-registration.yml
+    - template: update-app-registration.yml
   
   - ${{ if eq(parameters.appRegistrationAutomation, 'Renew App Registration Client Secret' ) }}:
-  - stage: Build
-    jobs:
-      - template: renew-app-registration-client-secret.yml
+    - template: renew-app-registration-client-secret.yml
