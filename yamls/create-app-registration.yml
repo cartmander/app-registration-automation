@@ -16,5 +16,5 @@ stages:
         inputs:
           azureSubscription: ${{ parameters.azureResourceManagerConnection }}
           scriptType: ps
-          scriptPath: '../scripts/CreateAppRegistration.ps1'
+          scriptPath: '$(System.DefaultWorkingDirectory)/scripts/CreateAppRegistration.ps1'
           arguments: '-subscription $(subscription) -name $(name) -owners $(owners) -kevVault $(keyVault) -apiPermissions $(apiPermissions) -replyUrls $(replyUrls)'

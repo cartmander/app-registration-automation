@@ -16,5 +16,5 @@ stages:
         inputs:
           azureSubscription: ${{ parameters.azureResourceManagerConnection }}
           scriptType: ps
-          scriptPath: '../scripts/UpdateAppRegistration.ps1'
+          scriptPath: '$(System.DefaultWorkingDirectory)/scripts/UpdateAppRegistration.ps1'
           arguments: '-subscription $(subscription) -appId $(appId) -resetProperties $(resetProperties) -owners $(owners) -apiPermissions $(apiPermissions) -replyUrls $(replyUrls)'
