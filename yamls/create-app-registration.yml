@@ -1,0 +1,21 @@
+parameters:
+  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
+
+variables:
+- group: APP-REGISTRATION-CREATE-VARS
+
+stages:
+- stage: Create
+  displayName: Create App Registration
+  jobs:
+  - job: Create App Registration
+    pool:
+       vmImage: 'windows-latest'
+    steps:
+      - task: AzureCLI@2
+        displayName: 'Create App Registration'
+        inputs:
+          azureSubscription: ${{ parameters.azureResourceManagerConnection }}
+          scriptType: ps
+          scriptPath: '../scripts/CreateAppRegistration.ps1'
+          arguments: '-subscription $(subscription) -name $(name) -owners $(owners) -kevVault $(keyVault) -apiPermissions $(apiPermissions) -replyUrls $(replyUrls)'

@@ -1,0 +1,21 @@
+parameters:
+  azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
+
+variables:
+- group: APP-REGISTRATION-UPDATE-VARS
+
+stages:
+- stage: Update
+  displayName: Update App Registration
+  jobs:
+  - job: Update App Registration
+    pool:
+       vmImage: 'windows-latest'
+    steps:
+      - task: AzureCLI@2
+        displayName: 'Update App Registration'
+        inputs:
+          azureSubscription: ${{ parameters.azureResourceManagerConnection }}
+          scriptType: ps
+          scriptPath: '../scripts/UpdateAppRegistration.ps1'
+          arguments: '-subscription $(subscription) -appId $(appId) -resetProperties $(resetProperties) -owners $(owners) -apiPermissions $(apiPermissions) -replyUrls $(replyUrls)'
