@@ -1,14 +1,13 @@
 parameters:
   azureResourceManagerConnection: ICO-DEV-SERVICE-CONN
 
-variables:
-- group: APP-REGISTRATION-CREATE-VARS
-
 stages:
-- stage: Create
+- stage: Build
   displayName: Create App Registration
   jobs:
-  - job: Create App Registration
+  - job: Build
+    variables:
+    - group: APP-REGISTRATION-CREATE-VARS
     pool:
        vmImage: 'windows-latest'
     steps:
