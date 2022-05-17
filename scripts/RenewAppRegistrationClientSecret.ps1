@@ -83,6 +83,7 @@ function DisplayAppRegistrationClientSecretsForRenewal
 
     else
     {
+        Write-Host "Hello world"
         Write-Host "There are no App Registration Client Secrets expiring within the next 30 days."
     }
 }
@@ -195,8 +196,6 @@ function GetAppRegistrationList
 
 try
 {
-    Write-Host "Hello world"
-    
     az account set --subscription $subscription
     
     $appRegistrationList = GetAppRegistrationList
