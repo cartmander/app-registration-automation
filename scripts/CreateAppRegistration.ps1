@@ -130,8 +130,6 @@ try
     $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
     $getKeyVault = az keyvault show --name $keyVault | ConvertFrom-Json
 
-    Write-Host "Hello world"
-
     if ($null -eq $getKeyVault)
     {
         Write-Host "Key Vault '$getKeyVault' does not exist."
