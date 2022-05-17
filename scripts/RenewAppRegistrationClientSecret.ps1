@@ -195,6 +195,8 @@ function GetAppRegistrationList
 
 try
 {
+    Write-Host "Hello world"
+    
     az account set --subscription $subscription
     
     $appRegistrationList = GetAppRegistrationList
