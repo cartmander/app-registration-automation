@@ -14,9 +14,7 @@ stages:
       - task: AzureCLI@2
         displayName: 'Create App Registration'
         inputs:
-          azureSubscription: '${{ parameters.azureResourceManagerConnection }}'
-          scriptType: 'ps'
-          scriptLocation: 'scriptPath'
+          azureSubscription: ${{ parameters.azureResourceManagerConnection }}
+          scriptType: ps
           scriptPath: '$(System.DefaultWorkingDirectory)/scripts/CreateAppRegistration.ps1'
           arguments: '-subscription $(subscription) -name $(name) -owners $(owners) -keyVault $(keyVault) -apiPermissions $(apiPermissions) -replyUrls $(replyUrls)'
-          addSpnToEnvironment: true
