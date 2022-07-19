@@ -125,7 +125,7 @@ function AddOwners
 
 try
 {
-    az account set --subscription $subscription
+    az login --identity
 
     $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
     $getKeyVault = az keyvault show --name $keyVault | ConvertFrom-Json

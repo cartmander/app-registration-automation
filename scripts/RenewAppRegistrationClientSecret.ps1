@@ -195,7 +195,7 @@ function GetAppRegistrationList
 
 try
 {
-    az account set --subscription $subscription
+    az login --identity
     
     $appRegistrationList = GetAppRegistrationList
 
