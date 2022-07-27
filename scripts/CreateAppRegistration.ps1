@@ -128,7 +128,7 @@ try
     #az login --identity
     Write-Output "Running the script..."
 
-    $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
+    $getAADApplication = az ad app list --all --query "[?contains(displayName, '$name')]" | ConvertFrom-Json
     $getKeyVault = az keyvault show --name $keyVault | ConvertFrom-Json
 
     if ($null -eq $getKeyVault)
