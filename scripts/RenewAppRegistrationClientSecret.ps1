@@ -77,13 +77,13 @@ function DisplayAppRegistrationClientSecretsForRenewal
 
     if ($appRegistrationForRenewalList.Count -ne 0)
     {
-        Write-Host "App Registration Client Secrets for Renewal (expiring within the next 30 days):"
+        Write-Output "App Registration Client Secrets for Renewal (expiring within the next 30 days):"
         $appRegistrationForRenewalList | Select-Object -Property AppRegistrationId,AppRegistrationName,KeyVault,ClientSecretId,DaysRemaining | Sort-Object -Property DaysRemaining | Format-Table
     }
 
     else
     {
-        Write-Host "There are no App Registration Client Secrets expiring within the next 30 days."
+        Write-Output "There are no App Registration Client Secrets expiring within the next 30 days."
     }
 }
 
@@ -196,6 +196,7 @@ function GetAppRegistrationList
 try
 {
     #az login --identity
+    Write-Output "Running the script..."
     
     $appRegistrationList = GetAppRegistrationList
 
@@ -207,6 +208,8 @@ try
     {
         AddOrRenewAppRegistrationClientSecrets $appRegistrationForRenewalList
     }
+
+    Write-Output "Done running the script..."
 }
 
 catch {}

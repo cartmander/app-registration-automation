@@ -91,6 +91,7 @@ function AddOwners
 try
 {
     #az login --identity
+    Write-Output "Running the script..."
 
     $getAADApplication = az ad app show --id $appId | ConvertFrom-Json
 
@@ -108,14 +109,15 @@ try
         # Authentication
         AddReplyUrls $appId $getAADApplication
 
-        Write-Host "App Registration '$displayName' has been updated successfully."
+        Write-Output "App Registration '$displayName' has been updated successfully."
     }
 
     else
     {
-        Write-Host "App Registration App Id '$appId' does not exist."
+        Write-Output "App Registration App Id '$appId' does not exist."
         exit 1
     }
+    Write-Output "Done running the script..."
 }
 
 catch {}

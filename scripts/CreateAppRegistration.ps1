@@ -126,19 +126,20 @@ function AddOwners
 try
 {
     #az login --identity
+    Write-Output "Running the script..."
 
     $getAADApplication = Get-AzureADApplication -Filter "DisplayName eq '$name'"
     $getKeyVault = az keyvault show --name $keyVault | ConvertFrom-Json
 
     if ($null -eq $getKeyVault)
     {
-        Write-Host "Key Vault '$getKeyVault' does not exist."
+        Write-Output "Key Vault '$getKeyVault' does not exist."
         exit 1
     }
 
     if ($null -ne $getAADApplication)
     {
-        Write-Host "App Registration '$name' already exists."
+        Write-Output "App Registration '$name' already exists."
         exit 1
     }
 
@@ -166,8 +167,10 @@ try
         # Certificate
         AddCertificate $appId
 
-        Write-Host "App Registration '$name' has been created successfully."
+        Write-Output "App Registration '$name' has been created successfully."
     }
+
+    Write-Output "Done running the script..."
 }
 
 catch {}
