@@ -3,8 +3,7 @@ trigger:
 
 name: Deploy App Registration Automation
 
-pool:
-  vmImage: 'windows-latest'
+pool: IRRNDG-AUTOMATION-POOL
 
 parameters:
   - name: appRegistrationAutomation

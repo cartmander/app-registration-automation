@@ -1,7 +1,7 @@
 parameters:
 - name: azureResourceManagerConnection
   type: string
-  default: MNGD-IDENTITY-SERVICE-CONN
+  default: ICO-DEV-SERVICE-CONN
 
 stages:
 - stage: Build
