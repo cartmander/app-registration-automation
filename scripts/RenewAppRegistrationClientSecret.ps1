@@ -195,7 +195,7 @@ function GetAppRegistrationList
 
 try
 {
-    az login --identity
+    #az login --identity
     
     $appRegistrationList = GetAppRegistrationList
 

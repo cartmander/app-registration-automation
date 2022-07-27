@@ -90,7 +90,7 @@ function AddOwners
 
 try
 {
-    az login --identity
+    #az login --identity
 
     $getAADApplication = az ad app show --id $appId | ConvertFrom-Json
 
