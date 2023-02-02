@@ -63,7 +63,9 @@ function RenewAppRegistrationClientSecret
 
     $newClientSecret = az ad app credential reset --id $appRegistrationId --years $secretDuration  --display-name $clientSecretName --append | ConvertFrom-Json
 
-    ProcessKeyVaultWrite $newClientSecret
+    Write-Host "NEW Client Secret generated for App Registration: '$appRegistrationName'"
+
+    #ProcessKeyVaultWrite $newClientSecret
 }
 
 function IsAppRegistrationForRenewal
