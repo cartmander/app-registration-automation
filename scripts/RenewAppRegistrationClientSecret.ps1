@@ -2,9 +2,15 @@ param(
     [Parameter(Mandatory=$true)]
     [string] $appRegistrationId,
 
-    [string] $spanOfDaysForRenewal = "211",
-    [string] $keyVault = "ae-expiring-secrets-kv",
-    [bool] $shouldUpdate = $false
+    [Parameter(Mandatory=$true)]
+    [string] $appRegistrationName,
+
+    [Parameter(Mandatory=$true)]
+    [bool] $shouldRenew,
+
+    [int] $secretDuration = 1,
+    [int] $spanOfDaysForRenewal = 211,
+    [string] $keyVault = "ae-expiring-secrets-kv"
 )
 
 function UpsertSecretToKeyVault
@@ -17,7 +23,7 @@ function UpsertSecretToKeyVault
     $createdDate = (Get-Date).ToUniversalTime()
     $clientSecretName = "$($appRegistrationId)-$($createdDate)"
 
-    $expiryDate = $createdDate.AddYears($duration).ToUniversalTime()
+    $expiryDate = $createdDate.AddYears($secretDuration).ToUniversalTime()
 
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -32,7 +38,7 @@ function ProcessKeyVaultWrite
         [object] $clientSecret
     )
     
-    $keyVaultSecretList = az keyvault secret list --vault-name $keyVaultName --query "[?starts_with(name, '$appRegistration')]" | ConvertFrom-Json
+    $keyVaultSecretList = az keyvault secret list --vault-name $keyVaultName --query "[?starts_with(name, '$appRegistrationName')]" | ConvertFrom-Json
         
     if ($null -ne $keyVaultSecretList)
     {
@@ -52,69 +58,55 @@ function ProcessKeyVaultWrite
 
 function RenewAppRegistrationClientSecret
 {
-    param(
-        [string[]] $appRegistrationClientSecretList
-    )
+    $createdDate = (Get-Date).ToUniversalTime()
+    $clientSecretName = "$($appRegistrationId)-$($createdDate)"
 
-    foreach ($appRegistrationClientSecret in $appRegistrationClientSecretList)
-    {
-        $createdDate = (Get-Date).ToUniversalTime()
-        $clientSecretName = "$($appRegistrationId)-$($createdDate)"
+    $newClientSecret = az ad app credential reset --id $appRegistrationId --years $secretDuration  --display-name $clientSecretName --append | ConvertFrom-Json
 
-        $newClientSecret = az ad app credential reset --id $appRegistrationClientSecret.AppRegistrationId --years $duration  --display-name $clientSecretName --append | ConvertFrom-Json
-        
-        ProcessKeyVaultWrite $newClientSecret
-    }
+    ProcessKeyVaultWrite $newClientSecret
 }
 
-function GetAppRegistrationListForRenewal
+function IsAppRegistrationForRenewal
 {
-    $appRegistrationForRenewalList = @()
-
     $clientSecretList = az ad app credential list --id $appRegistrationId | ConvertFrom-Json
 
     if(![string]::IsNullOrEmpty($clientSecretList) -or $null -ne $clientSecretList)
     {
-        $forRenewal = $false
+        $isForRenewal = $false
 
         foreach ($clientSecret in $clientSecretList)
         {
             $currentDate = Get-Date
-            $clientSecretEndDate = $clientSecret.endDate
+            $clientSecretEndDate = $clientSecret.endDateTime
 
             $timeDifference = New-TimeSpan -Start $currentDate -End $clientSecretEndDate
             $timeDifferenceInDays = $timeDifference.Days
 
             if ($timeDifferenceInDays -le $spanOfDaysForRenewal)
             {   
-                $forRenewal = $true
+                $isForRenewal = $true
             }
-        }
-
-        if ($forRenewal)
-        {
-            $appRegistrationForRenewalList += $appRegistrationId
         }
     }
 
-    return $appRegistrationForRenewalList
+    return $isForRenewal
 }
 
 try
-{    
-    $appRegistrationForRenewalList = GetAppRegistrationListForRenewal $appRegistrationList
+{  
+    $appRegistrationForRenewal = IsAppRegistrationForRenewal
 
-    if ($null -ne $appRegistrationForRenewalList)
+    if ($appRegistrationForRenewal)
     { 
-        if($true -eq $shouldUpdate)
+        if($shouldRenew)
         {
-            RenewAppRegistrationClientSecret $appRegistrationForRenewalList
+            RenewAppRegistrationClientSecret
         }
     }
 
     else
     {
-        Write-Host "'$appRegistrationId' is not for renewal"
+        Write-Host "'$appRegistrationName' is not for renewal"
     }
 }
 

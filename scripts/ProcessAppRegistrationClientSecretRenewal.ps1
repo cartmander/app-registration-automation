@@ -47,12 +47,18 @@ function ProcessAppRegistrationClientSecretRenewal
     )
 
     $csv | ForEach-Object -Process {
+
+        $appRegistrationId = $_.AppRegistrationId
+        $showAppRegistration = az ad app show --id $appRegistrationId | ConvertFrom-Json
+        $appRegistrationName = $showAppRegistration.displayName
+
         $AppRegClientSecretRenewalArguments = @(
-            $_.AppRegistrationId,
+            $appRegistrationId
+            $appRegistrationName,
             $shouldRenew
         )
 
-        Start-Job -Name "$($_.AppRegistrationId)-AutomationJob" -FilePath .\scripts\RenewAppRegistrationClientSecret.ps1 -ArgumentList $AppRegClientSecretRenewalArguments
+        Start-Job -Name "$($appRegistrationName)-AutomationJob" -FilePath .\RenewAppRegistrationClientSecret.ps1 -ArgumentList $AppRegClientSecretRenewalArguments
     }
 
     JobLogging
@@ -79,19 +85,20 @@ function ValidateCsv
 
 try 
 {
-    az login -u $username -p $password
+    #az login --allow-no-subscriptions --tenant prodhome1services.onmicrosoft.com -u $username -p $password
 
     $ErrorActionPreference = 'Continue'
 
     Write-Host "##[section]Initializing automation..."
     
-    $csv = Import-Csv ".\csv\AppRegistrations.csv"
+    $csv = Import-Csv "..\.\csv\AppRegistrations.csv"
     
     ValidateCsv $csv
 
     ProcessAppRegistrationClientSecretRenewal $csv
     
     Write-Host "##[section]Done running the automation..."
+    Get-Job | Remove-Job
 }
 
 catch 
