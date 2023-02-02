@@ -59,7 +59,7 @@ function ProcessKeyVaultWrite
 function RenewAppRegistrationClientSecret
 {
     $createdDate = (Get-Date).ToUniversalTime()
-    $clientSecretName = "$($appRegistrationId)-$($createdDate)"
+    $clientSecretName = "$($appRegistrationName)-$($createdDate)"
 
     $newClientSecret = az ad app credential reset --id $appRegistrationId --years $secretDuration  --display-name $clientSecretName --append | ConvertFrom-Json
 
@@ -74,7 +74,7 @@ function IsAppRegistrationForRenewal
 
     if(![string]::IsNullOrEmpty($clientSecretList) -or $null -ne $clientSecretList)
     {
-        $isForRenewal = $false
+        $isForRenewal = $true
 
         foreach ($clientSecret in $clientSecretList)
         {
@@ -84,9 +84,9 @@ function IsAppRegistrationForRenewal
             $timeDifference = New-TimeSpan -Start $currentDate -End $clientSecretEndDate
             $timeDifferenceInDays = $timeDifference.Days
 
-            if ($timeDifferenceInDays -le $spanOfDaysForRenewal)
+            if ($timeDifferenceInDays -gt $spanOfDaysForRenewal)
             {   
-                $isForRenewal = $true
+                $isForRenewal = $false
             }
         }
     }
@@ -108,7 +108,7 @@ try
 
     else
     {
-        Write-Host "'$appRegistrationName' is not for renewal"
+        Write-Host "App Registration: '$appRegistrationName' is not for renewal"
     }
 }
 
