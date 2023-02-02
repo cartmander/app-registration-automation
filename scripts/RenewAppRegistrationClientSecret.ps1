@@ -13,69 +13,58 @@ param(
     [string] $keyVault = "ae-expiring-secrets-kv"
 )
 
-function UpsertSecretToKeyVault
+function ProcessSecretData
 {
     param(
-        [object] $clientSecret,
-        [string] $clientSecretValue
+        [string] $secretName,
+        [string] $secretValue,
+        [string] $startDate,
+        [string] $endDate
     )
-    
-    $createdDate = (Get-Date).ToUniversalTime()
-    $clientSecretName = "$($appRegistrationId)-$($createdDate)"
 
+    $file = "..\.\csv\AppRegistrations.csv"
+    $csv = Import-Csv $file
+
+    foreach ($record in $csv) 
+    {
+        if ($record.AppRegistrationId -eq $appRegistrationId)
+        {
+            $record.SecretName = $secretName
+            $record.SecretValue = $secretValue
+            $record.CreatedDate = $startDate
+            $record.ExpiryDate = $endDate
+        }
+    }
+
+    $csv | Export-Csv $file -NoTypeInformation
+}
+
+function RenewAppRegistrationClientSecret
+{
+    $createdDateToAppend = Get-Date –format "yyyyMMdd"
+    $createdDate = (Get-Date).ToUniversalTime()
     $expiryDate = $createdDate.AddYears($secretDuration).ToUniversalTime()
 
     $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
 
-    $secret = az keyvault secret set --name $clientSecretName --vault-name $keyVault --value $clientSecretValue | ConvertFrom-Json    
-    az keyvault secret set-attributes --id $secret.id --not-before $setSecretCreatedDate --expires $setSecretExpiryDate
-}
+    $clientSecretName = "$($appRegistrationName)-$($createdDateToAppend)"
 
-function ProcessKeyVaultWrite
-{
-    param(
-        [object] $clientSecret
-    )
-    
-    $keyVaultSecretList = az keyvault secret list --vault-name $keyVaultName --query "[?starts_with(name, '$appRegistrationName')]" | ConvertFrom-Json
-        
-    if ($null -ne $keyVaultSecretList)
-    {
-        $keyVaultSecret = $keyVaultSecretList[0]
-        $showKeyVaultSecret = az keyvault secret show --vault-name $keyVault --name $keyVaultSecret.name | ConvertFrom-Json
+    $newClientSecret = az ad app credential reset --id $appRegistrationId --years $secretDuration --display-name $clientSecretName --append | ConvertFrom-Json
 
-        UpsertClientSecretToKeyVault $keyVaultSecret $showKeyVaultSecret.value
-    }
+    Write-Host "Client Secret generated for App Registration: '$appRegistrationName'"
 
-    else
-    {
-        UpsertClientSecretToKeyVault $clientSecret $clientSecret.password
-    }
-
-    return $appRegistrationList
-}
-
-function RenewAppRegistrationClientSecret
-{
-    $createdDate = (Get-Date).ToUniversalTime()
-    $clientSecretName = "$($appRegistrationName)-$($createdDate)"
-
-    $newClientSecret = az ad app credential reset --id $appRegistrationId --years $secretDuration  --display-name $clientSecretName --append | ConvertFrom-Json
-
-    Write-Host "NEW Client Secret generated for App Registration: '$appRegistrationName'"
-
-    #ProcessKeyVaultWrite $newClientSecret
+    ProcessSecretData $clientSecretName $newClientSecret.password $setSecretCreatedDate $setSecretExpiryDate
 }
 
 function IsAppRegistrationForRenewal
 {
     $clientSecretList = az ad app credential list --id $appRegistrationId | ConvertFrom-Json
 
+    $isForRenewal = $true
+
     if(![string]::IsNullOrEmpty($clientSecretList) -or $null -ne $clientSecretList)
     {
-        $isForRenewal = $true
-
         foreach ($clientSecret in $clientSecretList)
         {
             $currentDate = Get-Date

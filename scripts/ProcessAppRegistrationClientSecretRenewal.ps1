@@ -1,11 +1,7 @@
 param(
-    [Parameter(Mandatory=$true)]
-    [string] $username,
-    
-    [Parameter(Mandatory=$true)]
-    [string] $password,
-
-    [bool] $shouldRenew=$false
+    [bool] $shouldRenew=$true,
+    [string] $subscription = "43ca9934-1ab8-48a2-a8e8-723d126a4a00", #SolutoHome1
+    [string] $tenant = "prodhome1services.onmicrosoft.com"
 )
 
 function ValidateJobState
@@ -54,11 +50,35 @@ function ProcessAppRegistrationClientSecretRenewal
 
         $AppRegClientSecretRenewalArguments = @(
             $appRegistrationId
-            $appRegistrationName,
+            $appRegistrationName
             $shouldRenew
         )
 
         Start-Job -Name "$($appRegistrationName)-AutomationJob" -FilePath .\RenewAppRegistrationClientSecret.ps1 -ArgumentList $AppRegClientSecretRenewalArguments
+    }
+
+    JobLogging
+}
+
+function ProcessSecretUpsertToKeyVault
+{
+    param(
+        [object] $csv
+    )
+
+    $csv | ForEach-Object -Process {
+
+        $secretName = $_.SecretName
+
+        $SecretUpsertToKeyVaultArguments = @(
+
+            $secretName,
+            $_.SecretValue
+            $_.CreatedDate
+            $_.ExpiryDate
+        )
+
+        Start-Job -Name "$($secretName)-AutomationJob" -FilePath .\UpsertSecretToKeyVault.ps1 -ArgumentList $SecretUpsertToKeyVaultArguments
     }
 
     JobLogging
@@ -70,7 +90,7 @@ function ValidateCsv
         [object] $csv
     )
 
-    $requiredHeaders = "AppRegistrationId"
+    $requiredHeaders = "AppRegistrationId", "SecretName", "SecretValue", "CreatedDate", "ExpiryDate"
     $csvHeaders = $csv[0].PSObject.Properties.Name.Split()
 
     foreach ($header in $csvHeaders)
@@ -85,8 +105,6 @@ function ValidateCsv
 
 try 
 {
-    #az login --allow-no-subscriptions --tenant prodhome1services.onmicrosoft.com -u $username -p $password
-
     $ErrorActionPreference = 'Continue'
 
     Write-Host "##[section]Initializing automation..."
@@ -95,7 +113,20 @@ try
     
     ValidateCsv $csv
 
+    az login --allow-no-subscriptions --tenant $tenant
     ProcessAppRegistrationClientSecretRenewal $csv
+    az logout
+
+    Get-Job | Remove-Job
+
+    Start-Sleep -s 10
+
+    $csv = Import-Csv "..\.\csv\AppRegistrations.csv"
+
+    az login
+    az account set --subscription $subscription
+    ProcessSecretUpsertToKeyVault $csv
+    #az logout
     
     Write-Host "##[section]Done running the automation..."
     Get-Job | Remove-Job
