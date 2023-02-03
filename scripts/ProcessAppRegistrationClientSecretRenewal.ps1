@@ -1,8 +1,9 @@
 param(
-    [bool] $shouldRenew=$true,
-    [string] $SUBSCRIPTION = "43ca9934-1ab8-48a2-a8e8-723d126a4a00", #SolutoHome1
-    [string] $TENANT = "prodhome1services.onmicrosoft.com"
+    [bool] $shouldRenew=$true
 )
+
+$SUBSCRIPTION = "43ca9934-1ab8-48a2-a8e8-723d126a4a00" #SolutoHome1
+$TENANT = "prodhome1services.onmicrosoft.com"
 
 function ValidateJobState
 {

@@ -2,10 +2,10 @@ param(
     [string] $secretName,
     [string] $secretValue,
     [string] $createdDate,
-    [string] $expiryDate,
-
-    [string] $KEYVAULT = "ae-expiring-secrets-kv"
+    [string] $expiryDate
 )
+
+$KEYVAULT = "ae-expiring-secrets-kv"
 
 function UpsertSecretToKeyVault
 {
