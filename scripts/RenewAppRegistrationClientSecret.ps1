@@ -51,14 +51,13 @@ function GenerateAppRegistrationClientSecret
 {
     try 
     {
-        $createdDateToAppend = Get-Date –format "yyyyMMdd"
         $createdDate = (Get-Date).ToUniversalTime()
         $expiryDate = $createdDate.AddYears($NEW_SECRET_DURATION_IN_YEARS).ToUniversalTime()
     
         $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
         $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
     
-        $clientSecretName = "$($appRegistrationName)-$($createdDateToAppend)"
+        $clientSecretName = "$($appRegistrationName)-$($appRegistrationId)"
     
         $newClientSecret = az ad app credential reset --id $appRegistrationId --years $NEW_SECRET_DURATION_IN_YEARS --display-name $clientSecretName --append | ConvertFrom-Json
     
@@ -114,7 +113,7 @@ try
 
     else
     {
-        Write-Host "##[warning]App Registration: '$appRegistrationName' is not for client secret renewal"
+        Write-Host "##[warning]App Registration: '$appRegistrationName' is not for Client Secret renewal"
     }
 }
 
