@@ -4,15 +4,24 @@ param(
     [string] $createdDate,
     [string] $expiryDate,
 
-    [string] $keyVault = "ae-expiring-secrets-kv"
+    [string] $KEYVAULT = "ae-expiring-secrets-kv"
 )
 
 function UpsertSecretToKeyVault
 {
-    $secret = az keyvault secret set --name $secretName --vault-name $keyVault --value $secretValue | ConvertFrom-Json    
-    az keyvault secret set-attributes --id $secret.id --not-before $createdDate --expires $expiryDate
+    try
+    {
+        $secret = az keyvault secret set --name $secretName --vault-name $KEYVAULT --value $secretValue | ConvertFrom-Json    
+        az keyvault secret set-attributes --id $secret.id --not-before $createdDate --expires $expiryDate
+    
+        Write-Host "##[section]Client Secret: '$secretName' has been uploaded/updated to Key Vault: $KEYVAULT"
+    }
 
-    Write-Host "Client Secret: '$secretName' has been uploaded/updated to Key Vault: $keyVault"
+    catch
+    {
+        Write-Host "##[error]Unable to upload/update Client Secret: '$secretName' to Key Vault: $KEYVAULT"
+        exit 1
+    }
 }
 
 function ValidateArguments
@@ -29,7 +38,6 @@ function ValidateArguments
 
 try
 {
-    $secretName
     ValidateArguments
     UpsertSecretToKeyVault
 }

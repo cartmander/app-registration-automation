@@ -1,7 +1,7 @@
 param(
     [bool] $shouldRenew=$true,
-    [string] $subscription = "43ca9934-1ab8-48a2-a8e8-723d126a4a00", #SolutoHome1
-    [string] $tenant = "prodhome1services.onmicrosoft.com"
+    [string] $SUBSCRIPTION = "43ca9934-1ab8-48a2-a8e8-723d126a4a00", #SolutoHome1
+    [string] $TENANT = "prodhome1services.onmicrosoft.com"
 )
 
 function ValidateJobState
@@ -71,7 +71,6 @@ function ProcessSecretUpsertToKeyVault
         $secretName = $_.SecretName
 
         $SecretUpsertToKeyVaultArguments = @(
-
             $secretName,
             $_.SecretValue
             $_.CreatedDate
@@ -109,27 +108,28 @@ try
 
     Write-Host "##[section]Initializing automation..."
     
+    #----Renew App Registration Secrets----#
     $csv = Import-Csv "..\.\csv\AppRegistrations.csv"
-    
     ValidateCsv $csv
 
-    az login --allow-no-subscriptions --tenant $tenant
+    az login --allow-no-subscriptions --tenant $TENANT
     ProcessAppRegistrationClientSecretRenewal $csv
     az logout
 
     Get-Job | Remove-Job
 
-    Start-Sleep -s 10
-
+    #----Upload Secrets to Key Vault----#
     $csv = Import-Csv "..\.\csv\AppRegistrations.csv"
+    ValidateCsv $csv
 
     az login
-    az account set --subscription $subscription
+    az account set --subscription $SUBSCRIPTION
     ProcessSecretUpsertToKeyVault $csv
-    #az logout
-    
-    Write-Host "##[section]Done running the automation..."
+    az logout
+
     Get-Job | Remove-Job
+
+    Write-Host "##[section]Done running the automation..."
 }
 
 catch 

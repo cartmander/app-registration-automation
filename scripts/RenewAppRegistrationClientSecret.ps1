@@ -8,9 +8,8 @@ param(
     [Parameter(Mandatory=$true)]
     [bool] $shouldRenew,
 
-    [int] $secretDuration = 1,
-    [int] $spanOfDaysForRenewal = 211,
-    [string] $keyVault = "ae-expiring-secrets-kv"
+    [int] $NEW_SECRET_DURATION_IN_YEARS = 1,
+    [int] $SPAN_OF_DAYS_FOR_RENEWAL = 211
 )
 
 function ProcessSecretData
@@ -22,39 +21,57 @@ function ProcessSecretData
         [string] $endDate
     )
 
-    $file = "..\.\csv\AppRegistrations.csv"
-    $csv = Import-Csv $file
-
-    foreach ($record in $csv) 
+    try
     {
-        if ($record.AppRegistrationId -eq $appRegistrationId)
+        $file = "..\.\csv\AppRegistrations.csv"
+        $csv = Import-Csv $file
+    
+        foreach ($record in $csv) 
         {
-            $record.SecretName = $secretName
-            $record.SecretValue = $secretValue
-            $record.CreatedDate = $startDate
-            $record.ExpiryDate = $endDate
+            if ($record.AppRegistrationId -eq $appRegistrationId)
+            {
+                $record.SecretName = $secretName
+                $record.SecretValue = $secretValue
+                $record.CreatedDate = $startDate
+                $record.ExpiryDate = $endDate
+            }
         }
+    
+        $csv | Export-Csv $file -NoTypeInformation
     }
 
-    $csv | Export-Csv $file -NoTypeInformation
+    catch
+    {
+        Write-Host "##[error]Unable to update Secrets.csv file"
+        exit 1
+    }
 }
 
-function RenewAppRegistrationClientSecret
+function GenerateAppRegistrationClientSecret
 {
-    $createdDateToAppend = Get-Date –format "yyyyMMdd"
-    $createdDate = (Get-Date).ToUniversalTime()
-    $expiryDate = $createdDate.AddYears($secretDuration).ToUniversalTime()
-
-    $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
-    $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
-
-    $clientSecretName = "$($appRegistrationName)-$($createdDateToAppend)"
-
-    $newClientSecret = az ad app credential reset --id $appRegistrationId --years $secretDuration --display-name $clientSecretName --append | ConvertFrom-Json
-
-    Write-Host "Client Secret generated for App Registration: '$appRegistrationName'"
-
-    ProcessSecretData $clientSecretName $newClientSecret.password $setSecretCreatedDate $setSecretExpiryDate
+    try 
+    {
+        $createdDateToAppend = Get-Date –format "yyyyMMdd"
+        $createdDate = (Get-Date).ToUniversalTime()
+        $expiryDate = $createdDate.AddYears($NEW_SECRET_DURATION_IN_YEARS).ToUniversalTime()
+    
+        $setSecretCreatedDate = $createdDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
+        $setSecretExpiryDate = $expiryDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ")
+    
+        $clientSecretName = "$($appRegistrationName)-$($createdDateToAppend)"
+    
+        $newClientSecret = az ad app credential reset --id $appRegistrationId --years $NEW_SECRET_DURATION_IN_YEARS --display-name $clientSecretName --append | ConvertFrom-Json
+    
+        Write-Host "##[section]NEW Client Secret generated for App Registration: '$appRegistrationName'"
+    
+        ProcessSecretData $clientSecretName $newClientSecret.password $setSecretCreatedDate $setSecretExpiryDate
+    }
+    
+    catch 
+    {
+        Write-Host "##[error]Unable to generate new Client Secret for App Registration: '$appRegistrationName'"
+        exit 1
+    }
 }
 
 function IsAppRegistrationForRenewal
@@ -73,7 +90,7 @@ function IsAppRegistrationForRenewal
             $timeDifference = New-TimeSpan -Start $currentDate -End $clientSecretEndDate
             $timeDifferenceInDays = $timeDifference.Days
 
-            if ($timeDifferenceInDays -gt $spanOfDaysForRenewal)
+            if ($timeDifferenceInDays -gt $SPAN_OF_DAYS_FOR_RENEWAL)
             {   
                 $isForRenewal = $false
             }
@@ -91,14 +108,17 @@ try
     { 
         if($shouldRenew)
         {
-            RenewAppRegistrationClientSecret
+            GenerateAppRegistrationClientSecret
         }
     }
 
     else
     {
-        Write-Host "App Registration: '$appRegistrationName' is not for renewal"
+        Write-Host "##[warning]App Registration: '$appRegistrationName' is not for client secret renewal"
     }
 }
 
-catch {}
+catch 
+{
+    exit 1
+}
