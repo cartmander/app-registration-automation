@@ -6,11 +6,11 @@ param(
     [string] $appRegistrationName,
 
     [Parameter(Mandatory=$true)]
-    [bool] $shouldRenew,
-
-    [int] $NEW_SECRET_DURATION_IN_YEARS = 1,
-    [int] $SPAN_OF_DAYS_FOR_RENEWAL = 211
+    [bool] $shouldRenew
 )
+
+$NEW_SECRET_DURATION_IN_YEARS = 1
+$SPAN_OF_DAYS_FOR_RENEWAL = 211
 
 function ProcessSecretData
 {
